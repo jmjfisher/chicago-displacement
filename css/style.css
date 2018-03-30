@@ -1,5 +1,7 @@
 #mapid {
-    height: 97vh;
-    width: 97%;
+    height: 85vh;
+    width: 85%;
     display: inline-block;
+    margin-left: 7.5%;
+    margin-top: 7.5vh;
 }
