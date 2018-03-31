@@ -29,72 +29,43 @@ function createMap(){
         
         var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county).features;
         
-        //create D3 scale
-        var colorScale = makeColorScale(expressed,tracts);
-        
         //call function to add tracts
-        var layer = addTracts(expressed, map, tracts, colorScale);
-        map.addLayer(layer)
+        var overlayMaps = addTracts(map, expressed, tracts);
         
-        addButtons(map, tracts, layer);
-    
+        L.control.layers(overlayMaps).addTo(map);
     };
+    
 };
 
-function addButtons(map, tracts, layer){
+function addTracts(map, expressed, tracts) { //source: http://bl.ocks.org/Caged/5779481
     
     var options = ['UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
                    'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
     
-    var buttons = d3.select("body")
-        .append("div")
-        .attr("class", "buttons")
+    var overlayMaps = {
+        'UERPCTCHG': null,
+        'PCIPCTCHG': null,
+        'POVPCTCHG': null,
+        'POPPCTCHG': null,
+        'BLKPCTCHG': null,
+        'ASNPCTCHG': null,
+        'HSPPCTCHG': null,
+        'WHTPCTCHG': null,
+        'HSPCTCHG': null,
+        'PHSPCTCHG': null,
+        'ORRPCTCHG': null};
     
-    var button = buttons.selectAll('.button')
-        .data(options)
-        .enter()
-        .append("svg")
-        .attr("class", "button")
-        .attr("height", "50px")
-        .attr("width", "100px")
-        .on("click", function(d){
-            changeDisplay(d, map, tracts, layer);
+    for (var i = 0; i < options.length; i++){
+        var expressed = String(options[i]);
+        var colorScale = makeColorScale(expressed,tracts);
+        var layer = L.geoJson(tracts, {
+            style: function(feature){return setStyle(feature, colorScale, expressed)},
+            onEachFeature: onEachFeature
         })
-        .append("text")
-        .attr("x", "0")
-        .attr("y", "10")
-        .html(function (d) {
-            return d
-        });
-};
-
-function changeDisplay(d, map, tracts, layer){
+        overlayMaps[expressed] = layer;
+    }
     
-    var expressed = d;
-    
-    var colorScale = makeColorScale(expressed,tracts);
-    
-    map.removeLayer(layer);
-    
-    var layer = addTracts(expressed, map, tracts, colorScale);
-    
-    map.addLayer(layer)
-    
-    
-    
-}
-
-function addTracts(expressed, map, tracts, colorScale) { //source: http://bl.ocks.org/Caged/5779481
-    
-    //create layer with styling and other features
-    var layer = L.geoJson(tracts, {
-        style: function(feature){return setStyle(feature, colorScale, expressed)},
-        onEachFeature: onEachFeature
-    })
-    
-    return layer
-
-    
+    return overlayMaps;
 };
 
 function onEachFeature(feature, layer) {
