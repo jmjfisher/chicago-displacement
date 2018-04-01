@@ -12,27 +12,53 @@ function createMap(){
         minZoom: 10,
         maxBounds: myBounds
     }).setView([41.92, -87.75], 12);
-
-    //add base tilelayer    
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+   
+    var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
         id: 'mapbox.streets',
         accessToken: 'pk.eyJ1Ijoiam1qZmlzaGVyIiwiYSI6ImNqYXVlNDg3cDVhNmoyd21oZ296ZXpwdWMifQ.OGprR1AOquImP-bemM-f2g'
     }).addTo(map);
     
+    var imagery = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        id: 'mapbox.streets-satellite',
+        accessToken: 'pk.eyJ1Ijoiam1qZmlzaGVyIiwiYSI6ImNqYXVlNDg3cDVhNmoyd21oZ296ZXpwdWMifQ.OGprR1AOquImP-bemM-f2g'
+    });
+    
+    var baseLayers = {
+        "Streets": streets,
+        "Imagery": imagery
+    };
+    
     //use queue to parallelize asynchronous data loading
     d3.queue()
         .defer(d3.json, "data/cook_county.topojson") //async load tracts
+        .defer(d3.json, "data/CTA_4326.topojson") //async load L lines
+        .defer(d3.json, "data/CTA_stations_4326.topojson") //async L stations
         .await(callback);
-    
-    function callback (error, tractsTopo) {
         
+    function callback (error, tractsTopo, linesTopo, stationsTopo) {
+        
+        //grab the features from the topojsons
         var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county).features;
+        var lines = topojson.feature(linesTopo, linesTopo.objects.CTA_4326).features;
+        var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
+        
+        //for feature inspection
+        console.log("tracts geojson", tracts);
+        console.log("lines geojson", lines);
+        console.log("stations geojson", stations);
         
         //call function to add tracts
         var overlayMaps = addTracts(map, expressed, tracts);
         
-        L.control.layers(overlayMaps).addTo(map);
+        var options = {
+            exclusiveGroups: [overlayMaps]
+        }
+        
+        //control which layers are displayed source: http://leafletjs.com/reference-1.3.0.html#control
+        //probably need this!: https://github.com/ismyrnow/leaflet-groupedlayercontrol
+        L.control.groupedLayers(overlayMaps,options,{collapsed: false}).addTo(map);
     };
     
 };
