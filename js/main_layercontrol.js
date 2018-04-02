@@ -1,6 +1,6 @@
 //function to instantiate the Leaflet map
 function createMap(){
-    //set first choropleth field
+    //DELETE THIS???
     var expressed = 'PCIPCTCHG';
     
     //sets map boundary - needs tweaking
@@ -11,7 +11,7 @@ function createMap(){
         maxZoom: 18,
         minZoom: 10,
         maxBounds: myBounds
-    }).setView([41.92, -87.75], 12);
+    }).setView([41.92, -87.735], 12);
    
     var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -25,7 +25,7 @@ function createMap(){
         accessToken: 'pk.eyJ1Ijoiam1qZmlzaGVyIiwiYSI6ImNqYXVlNDg3cDVhNmoyd21oZ296ZXpwdWMifQ.OGprR1AOquImP-bemM-f2g'
     });
     
-    var baseLayers = {
+    var baseMaps = {
         "Streets": streets,
         "Imagery": imagery
     };
@@ -44,23 +44,105 @@ function createMap(){
         var lines = topojson.feature(linesTopo, linesTopo.objects.CTA_4326).features;
         var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
         
-        //for feature inspection
-        console.log("tracts geojson", tracts);
-        console.log("lines geojson", lines);
-        console.log("stations geojson", stations);
+        //call function to add tracts information to add-able layers
+        var tractLayers = addTracts(map, expressed, tracts);
         
-        //call function to add tracts
-        var overlayMaps = addTracts(map, expressed, tracts);
+        //call function to get MTA stuff on map
+        var linesAndStations = addMTA(map,lines,stations);
         
+        var groupedOverlays = {
+          "Tract Data": tractLayers,
+          "MTA Layers": linesAndStations
+        };
+        
+        //set options for groupedLayers control
         var options = {
-            exclusiveGroups: [overlayMaps]
+            exclusiveGroups: ["Tract Data"],
+            collapsed: false
         }
         
         //control which layers are displayed source: http://leafletjs.com/reference-1.3.0.html#control
+        //L.control.layers(baseMaps, groupedOverlays).addTo(map);
         //probably need this!: https://github.com/ismyrnow/leaflet-groupedlayercontrol
-        L.control.groupedLayers(overlayMaps,options,{collapsed: false}).addTo(map);
+        L.control.groupedLayers(baseMaps,groupedOverlays,options).addTo(map);
     };
     
+};
+
+function addMTA(map,lines,stations){
+    
+    var layerDict = {
+        'MTA "L" Routes': null,
+        'MTA "L" Stations': null
+    };
+    
+    var routes = L.geoJSON(lines,{
+        style: function(feature){return routeStyle(feature)}
+    }).addTo(map);
+    
+    var geojsonMarkerOptions = {
+        radius: 3,
+        fillColor: "white",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+    
+    var stationPoints = L.geoJSON(stations, {
+        pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, geojsonMarkerOptions);
+        },
+        onEachFeature: stationName
+    }).addTo(map);
+    
+    layerDict['MTA "L" Routes'] = routes;
+    layerDict['MTA "L" Stations'] = stationPoints;
+    
+    return layerDict;
+};
+
+function stationName(feature,layer){
+    
+    var popupContent = feature.properties['LONGNAME'];
+    
+    layer.bindTooltip(popupContent, {
+        offset: [0,-7],
+        direction: 'top',
+        className: 'popupStation'});
+}
+
+function routeStyle(feature){
+    var routeColor = feature.properties['LEGEND'];
+    
+    if (routeColor === 'RD'){
+        var color = 'red' 
+    }else if(routeColor ==='BL'){
+        var color = 'blue'
+    }else if(routeColor ==='BR'){
+        var color = 'brown'
+    }else if(routeColor ==='GR'){
+        var color = 'green'
+    }else if(routeColor ==='ML'){
+        var color = 'black'
+    }else if(routeColor ==='OR'){
+        var color = 'orange'
+    }else if(routeColor ==='PK'){
+        var color = 'pink'
+    }else if(routeColor ==='PR'){
+        var color = 'purple'
+    }else{
+        var color = 'yellow'
+    };
+    
+    //define style
+    var myStyle = {
+        "color": color,
+        "weight": 3,
+        "opacity": .8
+    };
+    
+    return myStyle;
 };
 
 function addTracts(map, expressed, tracts) { //source: http://bl.ocks.org/Caged/5779481
