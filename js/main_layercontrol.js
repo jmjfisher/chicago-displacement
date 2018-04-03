@@ -11,7 +11,7 @@ function createMap(){
         maxZoom: 18,
         minZoom: 10,
         maxBounds: myBounds
-    }).setView([41.92, -87.735], 12);
+    }).setView([41.9, -87.67], 13);
    
     var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -45,29 +45,40 @@ function createMap(){
         var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
         
         //call function to add tracts information to add-able layers
-        var tractLayers = addTracts(map, expressed, tracts);
+        var tractInformation = addTracts(map, expressed, tracts);
+        var tractLayers = tractInformation[0];
+        var tractScales = tractInformation[1];
         
         //call function to get MTA stuff on map
         var linesAndStations = addMTA(map,lines,stations);
         
         var groupedOverlays = {
-          "Tract Data": tractLayers,
+          "Tract Data Overlays": tractLayers,
           "MTA Layers": linesAndStations
         };
         
         //set options for groupedLayers control
         var options = {
-            exclusiveGroups: ["Tract Data"],
+            exclusiveGroups: ["Tract Data Overlays"],
             collapsed: false
         }
         
-        //control which layers are displayed source: http://leafletjs.com/reference-1.3.0.html#control
-        //L.control.layers(baseMaps, groupedOverlays).addTo(map);
-        //probably need this!: https://github.com/ismyrnow/leaflet-groupedlayercontrol
         L.control.groupedLayers(baseMaps,groupedOverlays,options).addTo(map);
-    };
-    
+        
+        map.on('overlayadd', function(layer){
+            changeLegend(layer,tractScales);
+        })
+    };    
 };
+
+//PICK UP HERE FOR LEGEND WORK! http://leafletjs.com/examples/choropleth/
+function changeLegend(layer,tractScales){
+    console.log(layer.name);
+    console.log(tractScales[layer.name].domain());
+    
+
+    
+}
 
 function addMTA(map,lines,stations){
     
@@ -78,7 +89,7 @@ function addMTA(map,lines,stations){
     
     var routes = L.geoJSON(lines,{
         style: function(feature){return routeStyle(feature)}
-    }).addTo(map);
+    });
     
     var geojsonMarkerOptions = {
         radius: 3,
@@ -94,7 +105,7 @@ function addMTA(map,lines,stations){
             return L.circleMarker(latlng, geojsonMarkerOptions);
         },
         onEachFeature: stationName
-    }).addTo(map);
+    });
     
     layerDict['MTA "L" Routes'] = routes;
     layerDict['MTA "L" Stations'] = stationPoints;
@@ -113,6 +124,7 @@ function stationName(feature,layer){
 }
 
 function routeStyle(feature){
+    
     var routeColor = feature.properties['LEGEND'];
     
     if (routeColor === 'RD'){
@@ -150,38 +162,43 @@ function addTracts(map, expressed, tracts) { //source: http://bl.ocks.org/Caged/
     var options = ['UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
                    'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
     
-    var overlayMaps = {
-        'UERPCTCHG': null,
-        'PCIPCTCHG': null,
-        'POVPCTCHG': null,
-        'POPPCTCHG': null,
-        'BLKPCTCHG': null,
-        'ASNPCTCHG': null,
-        'HSPPCTCHG': null,
-        'WHTPCTCHG': null,
-        'HSPCTCHG': null,
-        'PHSPCTCHG': null,
-        'ORRPCTCHG': null};
+    var dictKeys = ['Unemployment Rate Growth',
+                   'Per Capita Income Growth',
+                   'Poverty Rate Growth',
+                   'Population Growth',
+                   'Black Pop Growth',
+                   'Asian Pop Growth',
+                   'Hispanic Pop Growth',
+                   'White Pop Growth',
+                   'High School or Less Growth',
+                   'At least Some College Growth',
+                   'Renter:Owner Ratio Growth']
+    
+    var altDitct = {};
+    var scaleDict = {};
     
     for (var i = 0; i < options.length; i++){
-        var expressed = String(options[i]);
+        var expressed = options[i];
+        var dictKey = dictKeys[i];
         var colorScale = makeColorScale(expressed,tracts);
         var layer = L.geoJson(tracts, {
             style: function(feature){return setStyle(feature, colorScale, expressed)},
-            onEachFeature: onEachFeature
+            onEachFeature: function(feature,layer){return onEachFeature (feature,layer,expressed)}
         })
-        overlayMaps[expressed] = layer;
+        altDitct[dictKey] = layer;
+        scaleDict[dictKey] = colorScale;
     }
-    
-    return overlayMaps;
+    return [altDitct, scaleDict];
 };
 
-function onEachFeature(feature, layer) {
+function onEachFeature(feature,layer,expressed) {
     
     var lookUp = ['2016_POP','2010_POP','2016_BLACK','2010_BLACK','2016_ASIAN',
                   '2010_ASIAN','2016_HISP','2010_HISP','2016_WHITE','2010_WHITE',
                   '2016_HS','2010_HS','2016_POSTH','2010_POSTH','2016_PCTHM',
-                  '2010_PCTHM','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT'];
+                  '2010_PCTHM','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT',
+                  'UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
+                  'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
     
     var fields = ['2016 Population: ','2010 Population: ','2016 Black Pop: ','2010 Black Pop: ',
                   '2016 Asian Pop: ','2010 Asian Pop: ','2016 Hispanic Pop: ','2010 Hispanic Pop: ',
@@ -189,7 +206,11 @@ function onEachFeature(feature, layer) {
                   '2010 High School or Less Pop: ','2016 At Least Some College Pop: ',
                   '2010 At Least Some College Pop: ','2016 Percent Homeless: ','2010 Percent Homeless: ',
                   '2016 Home Owner Pop: ','2010 Home Owner Pop: ',
-                  '2016 Home Renter Pop: ','2010 Home Renter Pop: '];
+                  '2016 Home Renter Pop: ','2010 Home Renter Pop: ','Unemployment Rate Growth: ',
+                  'Per Capita Income Growth: ','Poverty Rate Growth: ','Population Growth: ',
+                  'Black Pop Growth: ','Asian Pop Growth: ','Hispanic Pop Growth: ',
+                  'White Pop Growth: ','High School or Less Growth: ','At least Some College Growth: ',
+                  'Renter:Owner Ratio Growth: '];
     
     var popupContent = '';
     
@@ -224,9 +245,51 @@ function setStyle(feature, colorscale, expressed){
     return myStyle;
 }
 
-function makeColorScale(expressed,tracts){
+//probably delete this
+function makeNaturalScale(expressed,tracts){
     
     var colorClasses = ['#d7191c','#fdae61','#ffffbf','#a6d96a','#1a9641'];
+
+    //create color scale generator
+    var colorScale = d3.scaleThreshold()
+        .range(colorClasses);
+
+    //build array of all values of the expressed attribute
+    var domainArray = [];
+    for (var i=0; i<tracts.length; i++){
+        var check = tracts[i].properties[expressed];
+        if (check !== 'UNDEF') {
+            var val = parseFloat(check);
+            domainArray.push(val);
+        }
+    };
+    
+    var reverseArray = ['UERPCTCHG', 'POVPCTCHG', 'HSPCTCHG', 'ORRPCTCHG']
+    
+    if (reverseArray.includes(expressed)){
+        domainArray.reverse();
+    }
+
+    //cluster data using ckmeans clustering algorithm to create natural breaks
+    var clusters = ss.ckmeans(domainArray, 5);
+
+    //reset domain array to cluster minimums
+    domainArray = clusters.map(function(d){
+        return d3.min(d);
+    });
+
+    //remove first value from domain array to create class breakpoints
+    domainArray.shift();
+
+    //assign array of last 4 cluster minimums as domain
+    colorScale.domain(domainArray);
+
+    return colorScale;
+};
+
+function makeColorScale(expressed,tracts){
+    
+    var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
 
     //create color scale generator
     var colorScale = d3.scaleQuantile()

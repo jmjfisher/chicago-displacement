@@ -9,3 +9,7 @@
 .button {
     background: red;
 }
+
+.leaflet-control {
+    opacity: .9;
+}
