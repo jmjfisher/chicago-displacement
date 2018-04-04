@@ -104,7 +104,7 @@ function changeLegend(layer,tractScales,map){
             for (var i = 0; i < quantiles.length-1; i++) {
                 div.innerHTML +=
                     '<i style="background:' + colors[i] + '"></i> ' +
-                    quantiles[i].toFixed(1) + (quantiles[i + 1] ? ' <b>-</b> ' + quantiles[i + 1].toFixed(1) + '<br>' : '+');
+                    quantiles[i].toFixed(1) + (String(quantiles[i + 1]) ? ' <b>-</b> ' + quantiles[i + 1].toFixed(1) + '<br>' : '+');
             };
             return div;
         };
@@ -185,7 +185,6 @@ function routeStyle(feature){
         "weight": 3,
         "opacity": .8
     };
-    
     return myStyle;
 };
 
@@ -213,49 +212,64 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
         var expressed = options[i];
         var dictKey = dictKeys[i];
         var colorScale = makeColorScale(expressed,tracts);
-        var layer = L.geoJson(tracts, {
+        var topo = L.geoJson(tracts, {
             style: function(feature){return setStyle(feature, colorScale, expressed)},
             onEachFeature: function(feature,layer){return onEachFeature (feature,layer,expressed)}
         })
-        altDitct[dictKey] = layer;
+        altDitct[dictKey] = topo;
         scaleDict[dictKey] = colorScale;
     }
     return [altDitct, scaleDict];
 };
 
 function onEachFeature(feature,layer,expressed) {
-    
-    var lookUp = ['2016_POP','2010_POP','2016_BLACK','2010_BLACK','2016_ASIAN',
-                  '2010_ASIAN','2016_HISP','2010_HISP','2016_WHITE','2010_WHITE',
-                  '2016_HS','2010_HS','2016_POSTH','2010_POSTH','2016_PCTHM',
-                  '2010_PCTHM','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT',
-                  'UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
-                  'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
-    
-    var fields = ['2016 Population: ','2010 Population: ','2016 Black Pop: ','2010 Black Pop: ',
-                  '2016 Asian Pop: ','2010 Asian Pop: ','2016 Hispanic Pop: ','2010 Hispanic Pop: ',
-                  '2016 White Pop: ','2010 White Pop: ','2016 High School or Less Pop: ',
-                  '2010 High School or Less Pop: ','2016 At Least Some College Pop: ',
-                  '2010 At Least Some College Pop: ','2016 Percent Homeless: ','2010 Percent Homeless: ',
-                  '2016 Home Owner Pop: ','2010 Home Owner Pop: ',
-                  '2016 Home Renter Pop: ','2010 Home Renter Pop: ','Unemployment Rate Growth: ',
-                  'Per Capita Income Growth: ','Poverty Rate Growth: ','Population Growth: ',
-                  'Black Pop Growth: ','Asian Pop Growth: ','Hispanic Pop Growth: ',
-                  'White Pop Growth: ','High School or Less Growth: ','At least Some College Growth: ',
-                  'Renter:Owner Ratio Growth: '];
-    
+
+    if (expressed === 'UERPCTCHG'){
+        var lookUp = ['UERPCTCHG','2016_POP','2010_POP']
+        var fields = ['Unemployment Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'PCIPCTCHG'){
+        var lookUp = ['PCIPCTCHG','2016_POP','2010_POP']
+        var fields = ['Per Capita Income Growth (%): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'POVPCTCHG'){
+        var lookUp = ['POVPCTCHG','2016_POP','2010_POP']
+        var fields = ['Poverty Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'POPPCTCHG'){
+        var lookUp = ['POPPCTCHG','2016_POP','2010_POP']
+        var fields = ['Population Growth (%): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'BLKPCTCHG'){
+        var lookUp = ['BLKPCTCHG','2016_BLACK','2010_BLACK']
+        var fields = ['Black Pop Growth (%): ','2016 Black Pop: ','2010 Black Pop: ']
+        } else if (expressed === 'ASNPCTCHG'){
+        var lookUp = ['ASNPCTCHG','2016_ASIAN','2010_ASIAN']
+        var fields = ['Asian Pop Growth (%): ','2016 Asian Pop: ','2010 Asian Pop: ']
+        } else if (expressed === 'HSPPCTCHG'){
+        var lookUp = ['HSPPCTCHG','2016_HISP','2010_HISP']
+        var fields = ['Hispanic Pop Growth (%): ','2016 Hispanic Pop: ','2010 Hispanic Pop: ']
+        } else if (expressed === 'WHTPCTCHG'){
+        var lookUp = ['WHTPCTCHG','2016_WHITE','2010_WHITE']
+        var fields = ['White Pop Growth (%): ','2016 White Pop: ','2010 White Pop: ']
+        } else if (expressed === 'HSPCTCHG'){
+        var lookUp = ['HSPCTCHG','2016_HS','2010_HS']
+        var fields = ['High School or Less Growth (% Difference): ','2016 High School or Less Pop: ','2010 High School or Less Pop: ']
+        } else if (expressed === 'PHSPCTCHG'){
+        var lookUp = ['PHSPCTCHG','2016_POSTH','2010_POSTH']
+        var fields = ['At least Some College Growth (% Difference): ','2016 At Least Some College Pop: ','2010 At Least Some College Pop: ']
+        } else if (expressed === 'ORRPCTCHG'){
+        var lookUp = ['ORRPCTCHG','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT']
+        var fields = ['Renter:Owner Ratio Growth (%): ','2016 Home Owner Pop: ','2010 Home Owner Pop: ','2016 Home Renter Pop: ','2010 Home Renter Pop: ']
+        }
+
     var popupContent = '';
-    
+
     for (var i=0; i < lookUp.length; i++){
         var stat = String(feature.properties[lookUp[i]]);
-        popupContent += fields[i];
-        popupContent += stat;
-        popupContent += '<br>';
+        popupContent += '<b>'+fields[i]+'</b>';
+        popupContent += stat + '<br>';
     }
-    
+
     layer.bindPopup(popupContent, {
-        maxHeight: 180,
-        minWidth: 300,
+        minWidth: 50,
+        closeOnClick: true,
         className: 'popup'});
 };
 
@@ -277,7 +291,7 @@ function setStyle(feature, colorscale, expressed){
     return myStyle;
 }
 
-//probably delete this
+/* probably delete this whole bit
 function makeNaturalScale(expressed,tracts){
     
     var colorClasses = ['#d7191c','#fdae61','#ffffbf','#a6d96a','#1a9641'];
@@ -318,15 +332,30 @@ function makeNaturalScale(expressed,tracts){
 
     return colorScale;
 };
+*/
 
 function makeColorScale(expressed,tracts){
     
-    var redScale = ['UERPCTCHG','POVPCTCHG','HSPCTCHG','ORRPCTCHG'];
-    if (redScale.includes(expressed)){
-        var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
+    var twoGreenThreeRed = ['UERPCTCHG','POVPCTCHG','ORRPCTCHG'];
+    var threeGreenTwoRed = ['HSPCTCHG'];
+    var twoRedThreeGreen = ['PCIPCTCHG','POPPCTCHG','BLKPCTCHG','ASNPCTCHG','HSPPCTCHG'];
+    var threeRedTwoGreen = ['WHTPCTCHG'];
+    var oneRedFourGreen = ['ORRPCTCHG'];
+    
+    if (twoGreenThreeRed.includes(expressed)){
+        var colorClasses = ['#74c476','#bae4b3','#fd8d3c','#f03b20','#bd0026'];
+    } else if (threeGreenTwoRed.includes(expressed)) {
+        var colorClasses = ['#74c476','#bae4b3','#edf8e9','#fd8d3c','#f03b20'];
+    } else if (twoRedThreeGreen.includes(expressed)) {
+        var colorClasses = ['#fd8d3c','#fecc5c','#74c476','#31a354','#006d2c'];
+    } else if (threeRedTwoGreen.includes(expressed)) {
+        var colorClasses = ['#f03b20','#fd8d3c','#fecc5c','#74c476','#31a354'];
     } else {
-        var colorClasses = ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c'];
+        var colorClasses = ['#fd8d3c','#bae4b3','#74c476','#31a354','#006d2c'];
     }
+    
+    //greens: ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c']
+    //reds: ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026']
 
     //create color scale generator
     var colorScale = d3.scaleQuantile()
