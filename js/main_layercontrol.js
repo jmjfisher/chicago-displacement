@@ -1,7 +1,5 @@
 //function to instantiate the Leaflet map
 function createMap(){
-    //DELETE THIS???
-    var expressed = 'PCIPCTCHG';
     
     //sets map boundary - needs tweaking
     var myBounds = [[41, -89.7],[43.9, -86.7]];
@@ -45,12 +43,12 @@ function createMap(){
         var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
         
         //call function to add tracts information to add-able layers
-        var tractInformation = addTracts(map, expressed, tracts);
+        var tractInformation = addTracts(map, tracts);
         var tractLayers = tractInformation[0];
         var tractScales = tractInformation[1];
         
         //call function to get MTA stuff on map
-        var linesAndStations = addMTA(map,lines,stations);
+        var linesAndStations = addMTA(map, lines, stations);
         
         var groupedOverlays = {
           "Tract Data Overlays": tractLayers,
@@ -63,44 +61,56 @@ function createMap(){
             collapsed: false
         }
         
-        L.control.groupedLayers(baseMaps,groupedOverlays,options).addTo(map);
+        L.control.groupedLayers(baseMaps, groupedOverlays, options).addTo(map);
         
         map.on('overlayadd', function(layer){
-            changeLegend(layer,tractScales,map);
+            changeLegend(layer, tractScales, map);
         })
     };    
 };
 
 // source:http://leafletjs.com/examples/choropleth/
 function changeLegend(layer,tractScales,map){
+    var MTA = ['MTA "L" Routes','MTA "L" Stations']
     var expressed = layer.name;
-    var domain = (tractScales[expressed].domain())
-    var max = Math.max.apply(null, domain);
-    var min = Math.min.apply(null, domain);
-    var colors = tractScales[expressed].range();
-    var quantiles = tractScales[expressed].quantiles();
-    quantiles.unshift(min);
-    quantiles.push(max);
-    
-    var legend = L.control({position: 'bottomleft'});
-    
-    legend.onAdd = function (map) {
-        //remove old legend
-        $('.legend').remove();
-
-        var div = L.DomUtil.create('div', 'info legend'),
-            labels = [];
-
-        // loop through our density intervals and generate a label with a colored square for each interval
-        for (var i = 0; i < quantiles.length-1; i++) {
-            div.innerHTML +=
-                '<i style="background:' + colors[i] + '"></i> ' +
-                quantiles[i] + (quantiles[i + 1] ? '&ndash;' + quantiles[i + 1] + '<br>' : '+');
+    //if adding MTA layer, don't mess with legend - the rest is housed in this IF statement
+    if (MTA.includes(expressed) == false){
+        
+        //get rid of previous legend
+        var oldLegend = $('.legend');
+        if (oldLegend !== null){
+            oldLegend.remove();
         }
-        return div;
+        
+        //set up (new) legend
+        var domain = (tractScales[expressed].domain())
+        var max = Math.max.apply(null, domain);
+        var min = Math.min.apply(null, domain);
+        var colors = tractScales[expressed].range();
+        var quantiles = tractScales[expressed].quantiles();
+        quantiles.unshift(min);
+        quantiles.push(max);
+
+        var legend = L.control({position: 'bottomleft'});
+
+        legend.onAdd = function(map){
+
+            var div = L.DomUtil.create('div', 'info legend')
+            var labels = [];
+
+            div.innerHTML += '<p><b>Legend</b></p>'
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < quantiles.length-1; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> ' +
+                    quantiles[i].toFixed(1) + (quantiles[i + 1] ? ' <b>-</b> ' + quantiles[i + 1].toFixed(1) + '<br>' : '+');
+            };
+            return div;
+        };
+        legend.addTo(map);
     };
-legend.addTo(map);
-}
+};
 
 function addMTA(map,lines,stations){
     
@@ -179,7 +189,7 @@ function routeStyle(feature){
     return myStyle;
 };
 
-function addTracts(map, expressed, tracts) { //source: http://bl.ocks.org/Caged/5779481
+function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
     
     var options = ['UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
                    'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
@@ -311,7 +321,12 @@ function makeNaturalScale(expressed,tracts){
 
 function makeColorScale(expressed,tracts){
     
-    var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
+    var redScale = ['UERPCTCHG','POVPCTCHG','HSPCTCHG','ORRPCTCHG'];
+    if (redScale.includes(expressed)){
+        var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
+    } else {
+        var colorClasses = ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c'];
+    }
 
     //create color scale generator
     var colorScale = d3.scaleQuantile()
