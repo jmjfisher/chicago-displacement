@@ -66,18 +66,40 @@ function createMap(){
         L.control.groupedLayers(baseMaps,groupedOverlays,options).addTo(map);
         
         map.on('overlayadd', function(layer){
-            changeLegend(layer,tractScales);
+            changeLegend(layer,tractScales,map);
         })
     };    
 };
 
-//PICK UP HERE FOR LEGEND WORK! http://leafletjs.com/examples/choropleth/
-function changeLegend(layer,tractScales){
-    console.log(layer.name);
-    console.log(tractScales[layer.name].domain());
+// source:http://leafletjs.com/examples/choropleth/
+function changeLegend(layer,tractScales,map){
+    var expressed = layer.name;
+    var domain = (tractScales[expressed].domain())
+    var max = Math.max.apply(null, domain);
+    var min = Math.min.apply(null, domain);
+    var colors = tractScales[expressed].range();
+    var quantiles = tractScales[expressed].quantiles();
+    quantiles.unshift(min);
+    quantiles.push(max);
     
+    var legend = L.control({position: 'bottomleft'});
+    
+    legend.onAdd = function (map) {
+        //remove old legend
+        $('.legend').remove();
 
-    
+        var div = L.DomUtil.create('div', 'info legend'),
+            labels = [];
+
+        // loop through our density intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < quantiles.length-1; i++) {
+            div.innerHTML +=
+                '<i style="background:' + colors[i] + '"></i> ' +
+                quantiles[i] + (quantiles[i + 1] ? '&ndash;' + quantiles[i + 1] + '<br>' : '+');
+        }
+        return div;
+    };
+legend.addTo(map);
 }
 
 function addMTA(map,lines,stations){
