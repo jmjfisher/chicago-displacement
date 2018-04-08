@@ -14,6 +14,22 @@ span {
     margin-top: 60px;
 }
 
+#data {
+    height: 88vh;
+    width: 85%;
+    display: inline-block;
+    margin-left: 7.5%;
+    margin-top: 60px;
+}
+
+#about {
+    height: 88vh;
+    width: 85%;
+    display: inline-block;
+    margin-left: 7.5%;
+    margin-top: 60px;
+}
+
 .leaflet-popup-content-wrapper {
     opacity: 0.8;
 }

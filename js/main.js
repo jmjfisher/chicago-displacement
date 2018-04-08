@@ -318,13 +318,14 @@ function setStyle(feature, colorscale, expressed){
     }
     //define style
     var myStyle = {
-        "color": fillColor,
+        "fillColor": fillColor,
         "fillOpacity": 0.5,
-        "weight": .1
+        "weight": 1.5,
+        "opacity": 0.5,
+        "color": '#3a3a3a'
     };
-
     return myStyle;
-}
+};
 
 /* probably delete this whole bit
 function makeNaturalScale(expressed,tracts){
@@ -387,10 +388,13 @@ function makeColorScale(expressed,tracts){
         var colorClasses = ['#f03b20','#fd8d3c','#fecc5c','#74c476','#31a354'];
     } else {
         var colorClasses = ['#fd8d3c','#bae4b3','#74c476','#31a354','#006d2c'];
-    }
+    };
     
-    //greens: ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c']
-    //reds: ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026']
+    /*
+    scales taken from colorbrewer
+    greens: ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c']
+    reds: ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026']
+    */
 
     //create color scale generator
     var colorScale = d3.scaleQuantile()
@@ -411,4 +415,31 @@ function makeColorScale(expressed,tracts){
     return colorScale;
 };
 
+//delayed scrolling between page sections
+function smoothScroll(){
+  // Add smooth scrolling to all links
+  $(".js-scroll").on('click', function(event) {
+
+    // Make sure this.hash has a value before overriding default behavior
+    if (this.hash !== "") {
+      // Prevent default anchor click behavior
+      event.preventDefault();
+
+      // Store hash
+      var hash = this.hash;
+
+      // Using jQuery's animate() method to add smooth page scroll
+      // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
+      $('html, body').animate({
+        scrollTop: $(hash).offset().top
+      }, 800, function(){
+   
+        // Add hash (#) to URL when done scrolling (default click behavior)
+        window.location.hash = hash;
+      });
+    }
+  });
+};
+
 $(document).ready(createMap);
+$(document).ready(smoothScroll);
