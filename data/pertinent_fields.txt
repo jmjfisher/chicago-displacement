@@ -1,0 +1,18 @@
+UERPCTCHG - % difference in unemployment rates (positive numbers are 'bad' as increase in unemployment over time) REVERSE
+PCIPCTCHG - % growth in per capita income (large positive indicates growth)
+
+POVPCTCHG - % difference in poverty (positive numbers are 'bad' as increase in poverty pop over time) REVERSE
+POPPCTCHG - % growth in population
+
+BLKPCTCHG - % growth in black population
+
+ASNPCTCHG - % growth in asian population
+
+HSPPCTCHG - % growth in hispanic population
+
+WHTPCTCHG - % growth in white (non-hispanic) population
+
+HSPCTCHG - % difference in high school or less population (positive indicates less educated population over time) REVERSE
+PHSPCTCHG - % difference in at least some college population (positive indicates more educated population over time)
+
+ORRPCTCHG - % difference in the ratio of people living in rentals over housing units they own themselves (a higher number would indicate that home ownership is down in that tract and thus a more mobile/less permanent population) REVERSE
