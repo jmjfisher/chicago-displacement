@@ -26,7 +26,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span> 
               </button>
-              <a class="navbar-brand js-scroll" href="#home">Chicago Displacement</a>
+              <a class="navbar-brand js-scroll" href="#home">Home</a>
             </div>
             <div class="collapse navbar-collapse" id="myNavbar">
               <ul class="nav navbar-nav navbar-right">
@@ -43,8 +43,9 @@
         <div class="jumbotron jumbotron-fluid" id="home">
             <div class="container-fluid">
                 <br>
-                <h1 class="shadow">Chicago Displacement</h1>
-                <h3 class="shadow">More soon...</h3>
+                <h1 class="shadow">Chicago Displacement &amp; Gentrification</h1>
+                <h3 class="shadow">An application to convey areas of potential population displacement or gentrification in Chicago from 2010-2016</h3>
+                <h4 class="shadow">Measuring changes in economics, education, housing, and population</h4>
             </div>
         </div>
         
@@ -71,7 +72,21 @@
 		<div id="aboutarea">
             <div class="container-fluid">
                 <div id="about">
-                    <p>About Map/Data/Us</p>
+                    <h2>Research Methodology</h2>
+                    <p>Tract values were derived from the <a href="https://www.census.gov/programs-surveys/acs/" target=blank>American Community Survey</a> datasets. To arrive at our map display values, we calculated the percentage change between the 2016 and 2010 data to measure differences over time. CTA and new buildings data were downloaded from the city of Chicago's <a href="https://data.cityofchicago.org/" target=blank>data portal</a>.</p>
+                    <p>The calculation of our <b>Gentrification Index</b> included finding the percentile rank (0-1; 0 being the least or negative growth; 1 being the most growth) of the percentage change of each tract for the following fields. Inverse fields are distiguished because those of higher percentile are assumed to be found outside of areas of high gentrification. Taking the inverse of this index would therefore result in a <b>Displacement Index</b>.</p>
+                    <ul>
+                        <li><p>Overall Population</p></li>
+                        <li><p>Per Capita Income</p></li>
+                        <li><p>College degree or higher population</p></li>
+                        <li><p>Rental:Owner Housing Unit Ratio</p></li>
+                        <li><p>High School or less population (inverse)</p></li>
+                        <li><p>Homeless Population (inverse)</p></li>
+                        <li><p>Unenployment Rate (inverse)</p></li>
+                        <li><p>Poverty Rate (inverse)</p></li>
+                    </ul>
+                    <h3>About Us</h3>
+                    <p>Developed by JohnMark Fisher and Sigfredo Gomez for the University of Wisconsin-Madison's Geography 575 course.</p>
                 </div>
             </div>
         </div>
