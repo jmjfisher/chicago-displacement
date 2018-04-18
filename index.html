@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width">
         
 		<title>Chicago Displacement</title>
-        <link rel="icon" href="img/star.ico">
+        <link rel="icon" href="img/multi_star.ico">
         
         <link rel="stylesheet" href="lib/leaflet/leaflet.css">
         <link rel="stylesheet" href="css/leaflet.groupedlayercontrol.min.css">
@@ -26,12 +26,12 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span> 
               </button>
-              <a class="navbar-brand js-scroll" href="#home">Home</a>
+              <a class="navbar-brand js-scroll" href="#home"><img id="cg-flag" src="img/mini_flag.png" alt="Home"></a>
             </div>
             <div class="collapse navbar-collapse" id="myNavbar">
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="#maparea" class="js-scroll">Map</a></li>
-                <li><a href="#dataarea" class="js-scroll">Data</a></li>
+                <li><a href="#dataarea" class="js-scroll">Chart</a></li>
                 <li><a href="#aboutarea" class="js-scroll">About</a></li>
               </ul>
             </div>
@@ -57,14 +57,16 @@
             </div>
         </div>
         
-        <!--DATA VIZ???-->
+        <!--DATA VIZ-->
         
 		<div id="dataarea">
             <div class="container-fluid">
-                <div id="chartData">
-                    <p>Look at me! I'm a chart. </p>
+                <!--Delete following DIV eventually-->
+                <div>
                     <li><a href="SigTest.html">testing page for Sig </a></li>
+                    <li><a href="JM_viz.html">testing page from JM</a></li>
                 </div>
+                <div id="data"></div>
             </div>
         </div>
         
@@ -102,7 +104,8 @@
         <script type="text/javascript" src="lib/simple-statistics.min.js"></script>
         <script type="text/javascript" src="lib/leaflet/leaflet-src.js"></script>
         <script type="text/javascript" src="lib/leaflet.groupedlayercontrol.min.js"></script>
-        <script type="text/javascript" src="js/main.js"></script>
+        <script src="https://bl.ocks.org/syntagmatic/raw/3341641/render-queue.js"></script>
+        <script type="text/javascript" src="js/main_try.js"></script>
         
 	</body>
     
