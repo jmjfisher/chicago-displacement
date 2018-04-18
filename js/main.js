@@ -544,7 +544,7 @@ var line = d3.line(),
     background,
     foreground;
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#dataarea").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
@@ -555,6 +555,7 @@ var svg = d3.select("body").append("svg")
 function setChart(csvMaster){
 
   // Extract the list of dimensions and create a scale for each.
+  //
   xScale.domain(dimensions = d3.keys(csvMaster[0]).filter(function(d) {
     return d != "name" && (yScale[d] = d3.scaleLinear()
         .domain(d3.extent(csvMaster, function(p) { return +p[d]; }))
@@ -583,6 +584,7 @@ function setChart(csvMaster){
     .enter().append("g")
       .attr("class", "dimension")
       .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; })
+      .attr("drag")
       .call(d3.behavior.drag()
         .origin(function(d) { return {xScale: x(d)}; })
         .on("dragstart", function(d) {
