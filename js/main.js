@@ -26,7 +26,7 @@ function createMap(){
     var baseMaps = {
         "Streets": streets,
         "Imagery": imagery
-    };
+    }; 
     
     //use queue to parallelize asynchronous data loading
     d3.queue()
@@ -34,9 +34,17 @@ function createMap(){
         .defer(d3.json, "data/CTA_4326.topojson") //async load L lines
         .defer(d3.json, "data/CTA_stations_4326.topojson") //async L stations
         .defer(d3.json, "data/new_build_500k.topojson") //asyn load new buildings
+        //csv prep for chart
+        .defer(d3.csv,  "data/master.csv") //asyn load attributes from masterCSV
         .await(callback);
         
-    function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo) {
+    function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo, csvMaster) {
+        //print console and check data 
+        console.log("Census Tracts",tractsTopo) //objects>>cook_county_inx >> geometries >>> properties >>> CG_GEOID
+        console.log("CTA Rail Lines",linesTopo)
+        console.log("CTA Rail Stations",stationsTopo)
+        console.log("buildings",buildingsTopo)
+        console.log("Master CSV, primary key = CG_GEOID",csvMaster)
         
         //grab the features from the topojsons
         var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county_idx).features;
@@ -51,6 +59,10 @@ function createMap(){
         
         //call function to get MTA and building stuff on map
         var linesStationsBuildings = addOtherLayers(map, lines, stations, buildings);
+
+
+        //adding csv values to the chart
+        setChart(csvMaster);
         
         var groupedOverlays = {
           "Tract Data Overlays": tractLayers,
@@ -73,7 +85,8 @@ function createMap(){
     $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
         L.DomEvent.stopPropagation(ev);
     });
-};
+
+}; // end of createMap
 
 // source:http://leafletjs.com/examples/choropleth/
 function changeLegend(layer,tractScales,map){
@@ -157,7 +170,7 @@ function changeLegend(layer,tractScales,map){
             oldLegend.remove();
         }
     }
-};
+}; // end of changeLegend
 
 function addOtherLayers(map,lines,stations,buildings){
     
@@ -208,7 +221,7 @@ function addOtherLayers(map,lines,stations,buildings){
     layerDict['New Buildings Since 2010'] = buildingPoints
     
     return layerDict;
-};
+}; // end of  addOtherLayers;
 
 function buildingInfo(feature,layer){
     
@@ -223,7 +236,7 @@ function buildingInfo(feature,layer){
         offset: [0,-7],
         direction: 'top',
         className: 'popupBuilding'});
-}
+} // end of buildingInfo
 
 function stationName(feature,layer){
     
@@ -233,7 +246,7 @@ function stationName(feature,layer){
         offset: [0,-7],
         direction: 'top',
         className: 'popupStation'});
-}
+} // end of  stationNAME
 
 function routeStyle(feature){
     
@@ -266,7 +279,7 @@ function routeStyle(feature){
         "opacity": .8
     };
     return myStyle;
-};
+}; // end of  routeStyle
 
 function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
     
@@ -315,7 +328,7 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
         scaleDict[dictKey] = colorScale;
     }
     return [altDitc, scaleDict];
-};
+}; // end of addTracts
 
 function onEachFeature(feature,layer,expressed) {
 
@@ -372,7 +385,7 @@ function onEachFeature(feature,layer,expressed) {
         minWidth: 50,
         closeOnClick: true,
         className: 'popup'});
-};
+}; // end of endofFeature
 
 function setStyle(feature, colorscale, expressed){
     //find the feature's fill color based on scale and make sure it's not undefined
@@ -391,7 +404,7 @@ function setStyle(feature, colorscale, expressed){
         "color": '#3a3a3a'
     };
     return myStyle;
-};
+}; // end of  setStyle
 
 /*
 function makeNaturalScale(expressed,tracts){
@@ -481,7 +494,7 @@ function makeColorScale(expressed,tracts){
     colorScale.domain(domainArray);
 
     return colorScale;
-};
+}; // end of  makeColorScale
 
 //delayed scrolling between page sections
 function smoothScroll(){
@@ -507,7 +520,146 @@ function smoothScroll(){
       });
     }
   });
-};
+}; // end of smoothScroll
+
+//_________________________________
+//Start of CHART with global variables
+
+
+
+//margin and following default settings but will need to tweek 
+//global VAR
+//updated 20180416
+var margin = {top: 30, right: 10, bottom: 10, left: 10},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+//scalePoint
+var xScale = d3.scaleLinear([0, width], 1),
+    yScale = {},
+    dragging = {};
+
+var line = d3.line(),
+    yAxis = d3.axisLeft()
+        .scale(yScale),
+    background,
+    foreground;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// div ID for html = chartData
+
+function setChart(csvMaster){
+
+  // Extract the list of dimensions and create a scale for each.
+  xScale.domain(dimensions = d3.keys(csvMaster[0]).filter(function(d) {
+    return d != "name" && (yScale[d] = d3.scaleLinear()
+        .domain(d3.extent(csvMaster, function(p) { return +p[d]; }))
+        .range([height, 0]));
+  }));
+
+  // Add grey background lines for context.
+  background = svg.append("g")
+      .attr("class", "background")
+    .selectAll("path")
+      .data(csvMaster)
+    .enter().append("path")
+      .attr("d", path);
+
+  // Add blue foreground lines for focus.
+  foreground = svg.append("g")
+      .attr("class", "foreground")
+    .selectAll("path")
+      .data(csvMaster)
+    .enter().append("path")
+      .attr("d", path);
+
+  // Add a group element for each dimension.
+  var g = svg.selectAll(".dimension")
+      .data(dimensions)
+    .enter().append("g")
+      .attr("class", "dimension")
+      .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; })
+      .call(d3.behavior.drag()
+        .origin(function(d) { return {xScale: x(d)}; })
+        .on("dragstart", function(d) {
+          dragging[d] = xScale (d);
+          background.attr("visibility", "hidden");
+        })
+        .on("drag", function(d) {
+          dragging[d] = Math.min(width, Math.max(0, d3.event.xScale ));
+          foreground.attr("d", path);
+          dimensions.sort(function(a, b) { return position(a) - position(b); });
+          xScale .domain(dimensions);
+          g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+        })
+        .on("dragend", function(d) {
+          delete dragging[d];
+          transition(d3.select(this)).attr("transform", "translate(" + xScale (d) + ")");
+          transition(foreground).attr("d", path);
+          background
+              .attr("d", path)
+            .transition()
+              .delay(500)
+              .duration(0)
+              .attr("visibility", null);
+        }));
+
+  // Add an axis and title.
+  g.append("g")
+      .attr("class", "axis")
+      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+    .append("text")
+      .style("text-anchor", "middle")
+      .attr("yScale", -9)
+      .text(function(d) { return d; });
+
+  // Add and store a brush for each axis.
+  g.append("g")
+      .attr("class", "brush")
+      .each(function(d) {
+        d3.select(this).call(yScale[d].brush = d3.svg.brush().y(yScale[d]).on("brushstart", brushstart).on("brush", brush));
+      })
+    .selectAll("rect")
+      .attr("xScale ", -8)
+      .attr("width", 16);
+
+
+}; // end of setChart
+
+function position(d) {
+  var v = dragging[d];
+  return v == null ? xScale(d) : v;
+}
+
+function transition(g) {
+  return g.transition().duration(500);
+}
+
+// Returns the path for a given data point.
+function path(d) {
+  return line(dimensions.map(function(p) { return [position(p), yScale[p](d[p])]; }));
+}
+
+function brushstart() {
+  d3.event.sourceEvent.stopPropagation();
+}
+
+// Handles a brush event, toggling the display of foreground lines.
+function brush() {
+  var actives = dimensions.filter(function(p) { return !yScale[p].brush.empty(); }),
+      extents = actives.map(function(p) { return yScale[p].brush.extent(); });
+  foreground.style("display", function(d) {
+    return actives.every(function(p, i) {
+      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+    }) ? null : "none";
+  });
+}
+
+
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
