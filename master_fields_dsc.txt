@@ -1,3 +1,4 @@
+GENT_IDX - "Gentrification Index"
 UERPCTCHG - % difference in unemployment rates (positive numbers are 'bad' as increase in unemployment over time) REVERSE
 PCIPCTCHG - % growth in per capita income (large positive indicates growth)
 

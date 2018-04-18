@@ -77,11 +77,11 @@ span {
 #home {
     width: 100%;
     height: 100vh;
-    background-image: url(/img/chicago.jpg);
+    background-image: url(/img/chicago_bw.jpg);
     background-size:cover;
     background-position: center;
     font-family: futura, sans-serif;
-    color: white;
+    color: #b3ddf2;
     text-align: center;
     font-size: 36px;
     padding-top: 120px;

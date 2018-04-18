@@ -30,7 +30,7 @@ function createMap(){
     
     //use queue to parallelize asynchronous data loading
     d3.queue()
-        .defer(d3.json, "data/cook_county.topojson") //async load tracts
+        .defer(d3.json, "data/cook_county_idx.topojson") //async load tracts
         .defer(d3.json, "data/CTA_4326.topojson") //async load L lines
         .defer(d3.json, "data/CTA_stations_4326.topojson") //async L stations
         .defer(d3.json, "data/new_build_500k.topojson") //asyn load new buildings
@@ -39,7 +39,7 @@ function createMap(){
     function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo) {
         
         //grab the features from the topojsons
-        var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county).features;
+        var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county_idx).features;
         var lines = topojson.feature(linesTopo, linesTopo.objects.CTA_4326).features;
         var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
         var buildings = topojson.feature(buildingsTopo, buildingsTopo.objects.new_build_500k).features;
@@ -69,14 +69,19 @@ function createMap(){
             changeLegend(layer, tractScales, map);
         })
     };
+    
+    $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
+        L.DomEvent.stopPropagation(ev);
+    });
 };
 
 // source:http://leafletjs.com/examples/choropleth/
 function changeLegend(layer,tractScales,map){
     var MTA = ['MTA "L" Routes','MTA "L" Stations','New Buildings Since 2010']
     var expressed = layer.name;
+    
     //if adding MTA layer, don't mess with legend - the rest is housed in this IF statement
-    if (MTA.includes(expressed) == false){
+    if (MTA.includes(expressed) == false & expressed != 'Gentrification Index' & expressed != 'None'){
         
         //get rid of previous legend
         var oldLegend = $('.legend');
@@ -111,7 +116,47 @@ function changeLegend(layer,tractScales,map){
             return div;
         };
         legend.addTo(map);
-    };
+    } else if (MTA.includes(expressed) == false & expressed == 'Gentrification Index') {
+        //get rid of previous legend
+        var oldLegend = $('.legend');
+        if (oldLegend !== null){
+            oldLegend.remove();
+        }
+        
+        //set up (new) legend
+        var domain = (tractScales[expressed].domain())
+        var max = Math.max.apply(null, domain);
+        var min = Math.min.apply(null, domain);
+        var colors = tractScales[expressed].range();
+        var quantiles = tractScales[expressed].quantiles();
+        quantiles.unshift(min);
+        quantiles.push(max);
+
+        var legend = L.control({position: 'bottomleft'});
+
+        legend.onAdd = function(map){
+
+            var div = L.DomUtil.create('div', 'info legend')
+            var labels = [];
+
+            div.innerHTML += '<p><b>' + expressed + '</b></p>'
+
+            // loop through our density intervals and generate a label with a colored square for each interval
+            for (var i = 0; i < quantiles.length-1; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> ' +
+                    quantiles[i].toFixed(3) + (String(quantiles[i + 1]) ? ' <b>-</b> ' + quantiles[i + 1].toFixed(3) + '<br>' : ' +');
+            };
+            return div;
+        };
+        legend.addTo(map);
+    } else if (MTA.includes(expressed) == false & expressed == 'None'){
+        //get rid of previous legend
+        var oldLegend = $('.legend');
+        if (oldLegend !== null){
+            oldLegend.remove();
+        }
+    }
 };
 
 function addOtherLayers(map,lines,stations,buildings){
@@ -225,10 +270,11 @@ function routeStyle(feature){
 
 function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
     
-    var options = ['UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
-                   'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG'];
+    var options = ['GENT_IDX','UERPCTCHG','PCIPCTCHG','POVPCTCHG','POPPCTCHG','BLKPCTCHG',
+                   'ASNPCTCHG','HSPPCTCHG','WHTPCTCHG','HSPCTCHG','PHSPCTCHG','ORRPCTCHG','NONE'];
     
-    var dictKeys = ['Unemployment Rate Growth',
+    var dictKeys = ['Gentrification Index',
+                    'Unemployment Rate Growth',
                    'Per Capita Income Growth',
                    'Poverty Rate Growth',
                    'Population Growth',
@@ -238,7 +284,8 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
                    'White Pop Growth',
                    'High School or Less Growth',
                    'At least Some College Growth',
-                   'Renter:Owner Ratio Growth']
+                   'Renter:Owner Ratio Growth',
+                   'None']
     
     var altDitc = {};
     var scaleDict = {};
@@ -248,7 +295,20 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
         var dictKey = dictKeys[i];
         var colorScale = makeColorScale(expressed,tracts);
         var topo = L.geoJson(tracts, {
-            style: function(feature){return setStyle(feature, colorScale, expressed)},
+            style: function(feature){
+                if (expressed != 'NONE'){
+                    return setStyle(feature, colorScale, expressed)
+                } else {
+                    var myStyle = {
+                        "fillColor": '#3a3a3a',
+                        "fillOpacity": 0,
+                        "weight": 0,
+                        "opacity": 0,
+                        "color": '#3a3a3a'
+                    };
+                    return myStyle;
+                }
+            },
             onEachFeature: function(feature,layer){return onEachFeature (feature,layer,expressed)}
         })
         altDitc[dictKey] = topo;
@@ -262,37 +322,43 @@ function onEachFeature(feature,layer,expressed) {
     if (expressed === 'UERPCTCHG'){
         var lookUp = ['UERPCTCHG','2016_POP','2010_POP']
         var fields = ['Unemployment Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
-        } else if (expressed === 'PCIPCTCHG'){
+    } else if (expressed === 'PCIPCTCHG'){
         var lookUp = ['PCIPCTCHG','2016_POP','2010_POP']
         var fields = ['Per Capita Income Growth (%): ','2016 Population: ','2010 Population: ']
-        } else if (expressed === 'POVPCTCHG'){
+    } else if (expressed === 'POVPCTCHG'){
         var lookUp = ['POVPCTCHG','2016_POP','2010_POP']
         var fields = ['Poverty Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
-        } else if (expressed === 'POPPCTCHG'){
+    } else if (expressed === 'POPPCTCHG'){
         var lookUp = ['POPPCTCHG','2016_POP','2010_POP']
         var fields = ['Population Growth (%): ','2016 Population: ','2010 Population: ']
-        } else if (expressed === 'BLKPCTCHG'){
+    } else if (expressed === 'BLKPCTCHG'){
         var lookUp = ['BLKPCTCHG','2016_BLACK','2010_BLACK']
         var fields = ['Black Pop Growth (%): ','2016 Black Pop: ','2010 Black Pop: ']
-        } else if (expressed === 'ASNPCTCHG'){
+    } else if (expressed === 'ASNPCTCHG'){
         var lookUp = ['ASNPCTCHG','2016_ASIAN','2010_ASIAN']
         var fields = ['Asian Pop Growth (%): ','2016 Asian Pop: ','2010 Asian Pop: ']
-        } else if (expressed === 'HSPPCTCHG'){
+    } else if (expressed === 'HSPPCTCHG'){
         var lookUp = ['HSPPCTCHG','2016_HISP','2010_HISP']
         var fields = ['Hispanic Pop Growth (%): ','2016 Hispanic Pop: ','2010 Hispanic Pop: ']
-        } else if (expressed === 'WHTPCTCHG'){
+    } else if (expressed === 'WHTPCTCHG'){
         var lookUp = ['WHTPCTCHG','2016_WHITE','2010_WHITE']
         var fields = ['White Pop Growth (%): ','2016 White Pop: ','2010 White Pop: ']
-        } else if (expressed === 'HSPCTCHG'){
+    } else if (expressed === 'HSPCTCHG'){
         var lookUp = ['HSPCTCHG','2016_HS','2010_HS']
         var fields = ['High School or Less Growth (% Difference): ','2016 High School or Less Pop: ','2010 High School or Less Pop: ']
-        } else if (expressed === 'PHSPCTCHG'){
+    } else if (expressed === 'PHSPCTCHG'){
         var lookUp = ['PHSPCTCHG','2016_POSTH','2010_POSTH']
         var fields = ['At least Some College Growth (% Difference): ','2016 At Least Some College Pop: ','2010 At Least Some College Pop: ']
-        } else if (expressed === 'ORRPCTCHG'){
+    } else if (expressed === 'ORRPCTCHG'){
         var lookUp = ['ORRPCTCHG','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT']
         var fields = ['Renter:Owner Ratio Growth (%): ','2016 Home Owner Pop: ','2010 Home Owner Pop: ','2016 Home Renter Pop: ','2010 Home Renter Pop: ']
-        }
+    } else if (expressed === 'GENT_IDX'){
+        var lookUp = ['GENT_IDX','2016_POP','2010_POP']
+        var fields = ['Gentrification Index (0-1): ','2016 Population: ','2010 Population: ']
+    } else if (expressed === 'NONE'){
+        var lookUp = ['2016_POP','2010_POP']
+        var fields = ['2016 Population: ','2010 Population: ']
+    }
 
     var popupContent = '';
 
@@ -327,10 +393,10 @@ function setStyle(feature, colorscale, expressed){
     return myStyle;
 };
 
-/* probably delete this whole bit
+/*
 function makeNaturalScale(expressed,tracts){
     
-    var colorClasses = ['#d7191c','#fdae61','#ffffbf','#a6d96a','#1a9641'];
+    var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
 
     //create color scale generator
     var colorScale = d3.scaleThreshold()
@@ -386,6 +452,8 @@ function makeColorScale(expressed,tracts){
         var colorClasses = ['#fd8d3c','#fecc5c','#74c476','#31a354','#006d2c'];
     } else if (threeRedTwoGreen.includes(expressed)) {
         var colorClasses = ['#f03b20','#fd8d3c','#fecc5c','#74c476','#31a354'];
+    } else if (expressed === 'GENT_IDX'){
+        var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
     } else {
         var colorClasses = ['#fd8d3c','#bae4b3','#74c476','#31a354','#006d2c'];
     };
