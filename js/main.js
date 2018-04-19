@@ -91,7 +91,7 @@ function createMap(){
 // source:http://leafletjs.com/examples/choropleth/
 function changeLegend(layer,tractScales,map){
     //lol, MTA is NYC
-    var MTA = ['MTA "L" Routes','MTA "L" Stations','New Buildings Since 2010']
+    var MTA = ['CTA "L" Routes','CTA "L" Stations','New Buildings Since 2010']
     var expressed = layer.name;
     
     //if adding MTA layer, don't mess with legend - the rest is housed in this IF statement
@@ -176,8 +176,8 @@ function changeLegend(layer,tractScales,map){
 function addOtherLayers(map,lines,stations,buildings){
     
     var layerDict = {
-        'MTA "L" Routes': null,
-        'MTA "L" Stations': null,
+        'CTA "L" Routes': null,
+        'CTA "L" Stations': null,
         'New Buildings Since 2010': null
     };
     
@@ -186,7 +186,7 @@ function addOtherLayers(map,lines,stations,buildings){
     });
     
     var stationMarkerOptions = {
-        radius: 3,
+        radius: 6,
         fillColor: "white",
         color: "#000",
         weight: 1,
@@ -217,8 +217,8 @@ function addOtherLayers(map,lines,stations,buildings){
         onEachFeature: buildingInfo
     });
     
-    layerDict['MTA "L" Routes'] = routes;
-    layerDict['MTA "L" Stations'] = stationPoints;
+    layerDict['CTA "L" Routes'] = routes;
+    layerDict['CTA "L" Stations'] = stationPoints;
     layerDict['New Buildings Since 2010'] = buildingPoints
     
     return layerDict;
@@ -543,6 +543,8 @@ function createChart(csvMaster){
     var devicePixelRatio = window.devicePixelRatio || 1;
 
     var color = d3.scaleOrdinal()
+    //need to change the range of colors. May stick to five?
+    //change this to a function with the color ranges used on the map?
     .range(
         ["#5DA5B3",
         "#D58323",
@@ -570,8 +572,7 @@ function createChart(csvMaster){
         "#D67D4B",
         "#8F86C2"]);
     // these are assgined to the primary key and will need to be changed
-    //for now they serve as a beautiful mess to the chart. 
-
+    //for now they serve as a beautiful mess to the chart.
     //number acutally is a float too 
     var types = {
       "Number": {
@@ -588,17 +589,19 @@ function createChart(csvMaster){
         within: function(d, extent, dim) { return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1]; },
         defaultScale: d3.scalePoint().range([0, innerHeight])
       },
-      //I think they anticipated it but never used
-      // can be left out for the transformation
-      // i'll leave it for now 
-      //honestly don't think we'll need it...
+      /*
+      I think they anticipated it but never used
+      can be left out for the transformation
+      i'll leave it for now 
+      honestly don't think we'll need it...
+      
       "Date": {
         key: "Date",
         coerce: function(d) { return new Date(d); },
         extent: d3.extent,
         within: function(d, extent, dim) { return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1]; },
         defaultScale: d3.scaleTime().range([0, innerHeight])
-      }
+      }*/
     }; // end of var types 
 
     //make up the columns in the chart 
@@ -606,7 +609,7 @@ function createChart(csvMaster){
     var dimensions = [
       {
         key: "CG_GEOID",
-        description: "Key Geo-ID",
+        description: "Geo-ID",
         type: types["String"],
         axis: d3.axisLeft()
           .tickFormat(function(d,i) {
@@ -945,7 +948,9 @@ function createChart(csvMaster){
     };
     
 }; // end of createChart
+//_______________________________________________________________________________________________________________
 
+// the following cluster of functions relate to the chart 
 function position(d) {
   var v = dragging[d];
   return v == null ? xScale(d) : v;
