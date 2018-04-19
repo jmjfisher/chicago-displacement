@@ -535,7 +535,9 @@ function createChart(csvMaster){
 
     var screenHeight = $(window).height(),
         parentWidth = $("#data").parent().width(),
-        margin = {top: 66, right: 110, bottom: 20, left: 188},
+        dataWidth = $("#data").width(),
+        dataHeight = $("#data").height(),
+        margin = {top: 90, right: 140, bottom: 40, left: 40},
         height = (screenHeight*.88) - margin.top - margin.bottom,
         width = (parentWidth*1) - margin.left - margin.right,
         innerHeight = height - 2;
@@ -608,101 +610,77 @@ function createChart(csvMaster){
     //first column all the way to the end
     var dimensions = [
       {
-        key: "CG_GEOID",
-        description: "Geo-ID",
-        type: types["String"],
-        axis: d3.axisLeft()
-          .tickFormat(function(d,i) {
-            return d;
-          })
-      },
-      {
         key: "GENT_IDX",
         description: "Gentrification Index",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
-      {
-        key: "PCIPCTCHG",
-        description: "Per Capita Income Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-      {
-        key: "POVPCTCHG",
-        description: "Poverty Rate Growth (% Difference)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-
-      {
-        key: "POPPCTCHG",
-        description: "Population Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-      {
-        key: "BLKPCTCHG",
-        description: "Black Pop Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-
      {
-        key: "ASNPCTCHG",
-        description: "Asian Pop Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-
-      {
-        key: "POPPCTCHG",
-        description: "Population Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-      {
-        key: "HSPPCTCHG",
-        description: "Hispanic Pop Growth (%)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-      {
-        key: "WHTPCTCHG",
-        description: "White Pop Growth (%)",
+        key: "PHSPCTCHG",
+        description: "At least Some College (% Difference)",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
       {
         key: "HSPCTCHG",
-        description: "High School or Less Growth (% Difference)",
-        type: types["Number"],
-        scale: d3.scaleSqrt().range([innerHeight, 0])
-      },
-     {
-        key: "PHSPCTCHG",
-        description: "At least Some College Growth (% Difference)",
+        description: "High School or Less (% Difference)",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
       {
         key: "ORRPCTCHG",
-        description: "Renter:Owner Ratio Growth (%)",
+        description: "Renter:Owner Ratio (%)",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
       {
-        key: "HSPPCTCHG",
-        description: "Hispanic Pop Growth (%)",
+        key: "PCIPCTCHG",
+        description: "Per Capita Income (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      },
+      {
+        key: "POVPCTCHG",
+        description: "Poverty Rate (% Difference)",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
       {
         key: "UERPCTCHG",
-        description: "Unemployment Rate Growth (% Difference)",
+        description: "Unemployment Rate (% Difference)",
         type: types["Number"],
         scale: d3.scaleSqrt().range([innerHeight, 0])
       },
+     {
+        key: "ASNPCTCHG",
+        description: "Asian Pop (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      },
+      {
+        key: "BLKPCTCHG",
+        description: "Black Pop (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      },
+      {
+        key: "HSPPCTCHG",
+        description: "Hispanic Pop (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      },
+      {
+        key: "WHTPCTCHG",
+        description: "White Pop (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      },
+      {
+        key: "POPPCTCHG",
+        description: "Population (%)",
+        type: types["Number"],
+        scale: d3.scaleSqrt().range([innerHeight, 0])
+      }
       /*
       //only keeping this around because it shows the build of a right axis
       {
@@ -727,12 +705,12 @@ function createChart(csvMaster){
 
     var container = d3.select("#data").append("div")
         .attr("class", "parcoords")
-        .style("width", width + margin.left + margin.right + "px")
-        .style("height", height + margin.top + margin.bottom + "px");
+        .style("width", dataWidth + "px")
+        .style("height", dataHeight-40 + "px");
 
     var svg = container.append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+        .attr("width", dataWidth + "px")
+        .attr("height", dataHeight-40 + "px")
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -946,6 +924,10 @@ function createChart(csvMaster){
     function d3_functor(v) {
       return typeof v === "function" ? v : function() { return v; };
     };
+    
+    var chartTitle = d3.select("#data").append("h4")
+        .attr("class", "chart-title")
+        .html("Growth of Gentrification and Displacement Indicators from 2010-2016 in Cook County, IL");
     
 }; // end of createChart
 //_______________________________________________________________________________________________________________

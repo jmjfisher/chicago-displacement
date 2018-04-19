@@ -16,10 +16,15 @@ span {
 
 #data {
     height: 88vh;
-    width: 85%;
+    width: 94%;
     display: inline-block;
-    margin-left: 7.5%;
+    margin-left: 3%;
     margin-top: 60px;
+}
+
+.chart-title{
+    margin: 2px;
+    text-align: center;
 }
 
 #about {
