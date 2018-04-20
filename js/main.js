@@ -9,7 +9,7 @@ function createMap(){
         maxZoom: 18,
         minZoom: 10,
         maxBounds: myBounds
-    }).setView([41.9, -87.67], 13);
+    }).setView([41.88, -87.7], 12);
    
     var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -35,8 +35,6 @@ function createMap(){
         .defer(d3.json, "data/CTA_stations_4326.topojson") //async L stations
         .defer(d3.json, "data/new_build_500k.topojson") //asyn load new buildings
         .defer(d3.json, "data/one_mi_buffer.topojson") //asyn load 1 mile buffer
-        //csv prep for chart
-        .defer(d3.csv,  "data/master.csv") //asyn load attributes from masterCSV
         .await(callback);
         
     function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo, bufferTopo, csvMaster) {
@@ -58,9 +56,6 @@ function createMap(){
         
         //call function to get CTA and building stuff on map
         var linesStationsBuildings = addOtherLayers(map, lines, stations, buildings, buffer);
-
-        //adding csv values to the chart
-        createChart(csvMaster);
         
         var groupedOverlays = {
           "Tract Data Overlays": tractLayers,
@@ -91,6 +86,9 @@ function createMap(){
     $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
         L.DomEvent.stopPropagation(ev);
     });
+    
+    //call function to create the chart
+    createChart();
     
 }; // end of createMap
 
@@ -182,10 +180,10 @@ function changeLegend(layer,tractScales,map){
 function addOtherLayers(map,lines,stations,buildings,buffer){
     
     var layerDict = {
+        'New Buildings Since 2010': null,
         'CTA "L" Routes': null,
         'CTA "L" Stations': null,
-        'CTA Stations 1-Mile Buffer': null,
-        'New Buildings Since 2010': null
+        'CTA Stations 1-Mile Buffer': null
     };
     
     var routes = L.geoJSON(lines,{
@@ -193,7 +191,7 @@ function addOtherLayers(map,lines,stations,buildings,buffer){
     }).addTo(map);
     
     var stationMarkerOptions = {
-        radius: 6,
+        radius: 4,
         fillColor: "white",
         color: "#000",
         weight: 1,
@@ -225,12 +223,12 @@ function addOtherLayers(map,lines,stations,buildings,buffer){
     });
     
     var bufferOptions = {
-        fillColor: "yellow",
+        fillColor: "#2F4F4F",
         dashArray: "5, 5",
         color: "#000",
         weight: 2,
         opacity: 1,
-        fillOpacity: 0.1
+        fillOpacity: 0.15
     };
     
     var bufferPoly = L.geoJSON(buffer,{
@@ -323,12 +321,103 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
     
     var altDitc = {};
     var scaleDict = {};
+    var geojson;
+    
+    function highlightFeature(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+            "weight": 4,
+            "opacity": 0.8,
+            "color": 'aqua'
+        });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            layer.bringToFront();
+        }
+    };
+
+    function resetHighlight(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+        "weight": 0,
+        "opacity": 0.5,
+        "color": '#3a3a3a'
+        });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            layer.bringToFront();
+        }
+    };
+    
+    function onEachFeature(feature,layer,expressed) {
+
+        if (expressed === 'UERPCTCHG'){
+            var lookUp = ['UERPCTCHG','2016_POP','2010_POP']
+            var fields = ['Unemployment Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'PCIPCTCHG'){
+            var lookUp = ['PCIPCTCHG','2016_POP','2010_POP']
+            var fields = ['Per Capita Income Growth (%): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'POVPCTCHG'){
+            var lookUp = ['POVPCTCHG','2016_POP','2010_POP']
+            var fields = ['Poverty Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'POPPCTCHG'){
+            var lookUp = ['POPPCTCHG','2016_POP','2010_POP']
+            var fields = ['Population Growth (%): ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'BLKPCTCHG'){
+            var lookUp = ['BLKPCTCHG','2016_BLACK','2010_BLACK']
+            var fields = ['Black Pop Growth (%): ','2016 Black Pop: ','2010 Black Pop: ']
+        } else if (expressed === 'ASNPCTCHG'){
+            var lookUp = ['ASNPCTCHG','2016_ASIAN','2010_ASIAN']
+            var fields = ['Asian Pop Growth (%): ','2016 Asian Pop: ','2010 Asian Pop: ']
+        } else if (expressed === 'HSPPCTCHG'){
+            var lookUp = ['HSPPCTCHG','2016_HISP','2010_HISP']
+            var fields = ['Hispanic Pop Growth (%): ','2016 Hispanic Pop: ','2010 Hispanic Pop: ']
+        } else if (expressed === 'WHTPCTCHG'){
+            var lookUp = ['WHTPCTCHG','2016_WHITE','2010_WHITE']
+            var fields = ['White Pop Growth (%): ','2016 White Pop: ','2010 White Pop: ']
+        } else if (expressed === 'HSPCTCHG'){
+            var lookUp = ['HSPCTCHG','2016_HS','2010_HS']
+            var fields = ['High School or Less Growth (% Difference): ','2016 High School or Less Pop: ','2010 High School or Less Pop: ']
+        } else if (expressed === 'PHSPCTCHG'){
+            var lookUp = ['PHSPCTCHG','2016_POSTH','2010_POSTH']
+            var fields = ['At least Some College Growth (% Difference): ','2016 At Least Some College Pop: ','2010 At Least Some College Pop: ']
+        } else if (expressed === 'ORRPCTCHG'){
+            var lookUp = ['ORRPCTCHG','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT']
+            var fields = ['Renter:Owner Ratio Growth (%): ','2016 Home Owner Pop: ','2010 Home Owner Pop: ','2016 Home Renter Pop: ','2010 Home Renter Pop: ']
+        } else if (expressed === 'GENT_IDX'){
+            var lookUp = ['GENT_IDX','2016_POP','2010_POP']
+            var fields = ['Gentrification Index: ','2016 Population: ','2010 Population: ']
+        } else if (expressed === 'NONE'){
+            var lookUp = ['2016_POP','2010_POP']
+            var fields = ['2016 Population: ','2010 Population: ']
+        }
+
+        var popupContent = '';
+
+        for (var i=0; i < lookUp.length; i++){
+            var stat = String(feature.properties[lookUp[i]]);
+            popupContent += '<b>'+fields[i]+'</b>';
+            popupContent += stat + '<br>';
+        }
+
+        layer.bindPopup(popupContent, {
+            minWidth: 50,
+            closeOnClick: true,
+            className: 'popup'});
+        
+        if (expressed !== 'NONE'){
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight
+            });
+        };
+    }; // end of onEachFeature
     
     for (var i = 0; i < options.length; i++){
         var expressed = options[i];
         var dictKey = dictKeys[i];
         var colorScale = makeColorScale(expressed,tracts);
-        var geojson = L.geoJson(tracts, {
+        geojson = L.geoJson(tracts, {
             style: function(feature){
                 if (expressed != 'NONE'){
                     return setStyle(feature, colorScale, expressed)
@@ -353,64 +442,6 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
     return [altDitc, scaleDict];
 }; // end of addTracts
 
-function onEachFeature(feature,layer,expressed) {
-
-    if (expressed === 'UERPCTCHG'){
-        var lookUp = ['UERPCTCHG','2016_POP','2010_POP']
-        var fields = ['Unemployment Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
-    } else if (expressed === 'PCIPCTCHG'){
-        var lookUp = ['PCIPCTCHG','2016_POP','2010_POP']
-        var fields = ['Per Capita Income Growth (%): ','2016 Population: ','2010 Population: ']
-    } else if (expressed === 'POVPCTCHG'){
-        var lookUp = ['POVPCTCHG','2016_POP','2010_POP']
-        var fields = ['Poverty Rate Growth (% Difference): ','2016 Population: ','2010 Population: ']
-    } else if (expressed === 'POPPCTCHG'){
-        var lookUp = ['POPPCTCHG','2016_POP','2010_POP']
-        var fields = ['Population Growth (%): ','2016 Population: ','2010 Population: ']
-    } else if (expressed === 'BLKPCTCHG'){
-        var lookUp = ['BLKPCTCHG','2016_BLACK','2010_BLACK']
-        var fields = ['Black Pop Growth (%): ','2016 Black Pop: ','2010 Black Pop: ']
-    } else if (expressed === 'ASNPCTCHG'){
-        var lookUp = ['ASNPCTCHG','2016_ASIAN','2010_ASIAN']
-        var fields = ['Asian Pop Growth (%): ','2016 Asian Pop: ','2010 Asian Pop: ']
-    } else if (expressed === 'HSPPCTCHG'){
-        var lookUp = ['HSPPCTCHG','2016_HISP','2010_HISP']
-        var fields = ['Hispanic Pop Growth (%): ','2016 Hispanic Pop: ','2010 Hispanic Pop: ']
-    } else if (expressed === 'WHTPCTCHG'){
-        var lookUp = ['WHTPCTCHG','2016_WHITE','2010_WHITE']
-        var fields = ['White Pop Growth (%): ','2016 White Pop: ','2010 White Pop: ']
-    } else if (expressed === 'HSPCTCHG'){
-        var lookUp = ['HSPCTCHG','2016_HS','2010_HS']
-        var fields = ['High School or Less Growth (% Difference): ','2016 High School or Less Pop: ','2010 High School or Less Pop: ']
-    } else if (expressed === 'PHSPCTCHG'){
-        var lookUp = ['PHSPCTCHG','2016_POSTH','2010_POSTH']
-        var fields = ['At least Some College Growth (% Difference): ','2016 At Least Some College Pop: ','2010 At Least Some College Pop: ']
-    } else if (expressed === 'ORRPCTCHG'){
-        var lookUp = ['ORRPCTCHG','2016_OWNER','2010_OWNER','2016_RENT','2010_RENT']
-        var fields = ['Renter:Owner Ratio Growth (%): ','2016 Home Owner Pop: ','2010 Home Owner Pop: ','2016 Home Renter Pop: ','2010 Home Renter Pop: ']
-    } else if (expressed === 'GENT_IDX'){
-        var lookUp = ['GENT_IDX','2016_POP','2010_POP']
-        var fields = ['Gentrification Index: ','2016 Population: ','2010 Population: ']
-    } else if (expressed === 'NONE'){
-        var lookUp = ['2016_POP','2010_POP']
-        var fields = ['2016 Population: ','2010 Population: ']
-    }
-
-    var popupContent = '';
-
-    for (var i=0; i < lookUp.length; i++){
-        var stat = String(feature.properties[lookUp[i]]);
-        popupContent += '<b>'+fields[i]+'</b>';
-        popupContent += stat + '<br>';
-    }
-
-    layer.bindPopup(popupContent, {
-        minWidth: 50,
-        closeOnClick: true,
-        className: 'popup'});
-
-}; // end of onEachFeature
-
 function setStyle(feature, colorscale, expressed){
     //find the feature's fill color based on scale and make sure it's not undefined
     var check = feature.properties[expressed];
@@ -423,7 +454,7 @@ function setStyle(feature, colorscale, expressed){
     var myStyle = {
         "fillColor": fillColor,
         "fillOpacity": 0.5,
-        "weight": 1.5,
+        "weight": 0,
         "opacity": 0.5,
         "color": '#3a3a3a',
         "className": String(feature.properties['CG_GEOID'])
@@ -503,7 +534,7 @@ function smoothScroll(){
 
 //createCHART mofo 
 //https://bl.ocks.org/syntagmatic/05a5b0897a48890133beb59c815bd953
-function createChart(csvMaster){
+function createChart(){
 
     var screenHeight = $(window).height(),
         parentWidth = $("#data").parent().width(),
@@ -800,8 +831,8 @@ function createChart(csvMaster){
 
         var actives = [];
         svg.selectAll(".axis .brush")
-            .on("mouseover", highlight)
-            .on("mouseout", dehighlight)
+            //.on("mouseover", highlight)
+            //.on("mouseout", dehighlight)
               .filter(function(d) {
                 return d3.brushSelection(this);
               })
