@@ -529,6 +529,25 @@ function smoothScroll(){
   });
 }; // end of smoothScroll
 
+function scrollify(){
+    $.scrollify({
+        section : "#home,#maparea,#dataarea,#aboutarea",
+        easing: "easeOutExpo",
+        scrollSpeed: 1100,
+        offset : 0,
+        scrollbars: true,
+        standardScrollElements: "",
+        setHeights: true,
+        overflowScroll: true,
+        updateHash: true,
+        touchScroll:true,
+        before:function() {},
+        after:function() {},
+        afterResize:function() {},
+        afterRender:function() {}
+    });
+};
+
 //_______________________________________________________________________________________________________________
 //_______________________________________________________________________________________________________________
 
@@ -944,3 +963,4 @@ function dehighlight(){
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
+$(document).ready(scrollify);
