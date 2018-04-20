@@ -34,17 +34,19 @@ function createMap(){
         .defer(d3.json, "data/CTA_4326.topojson") //async load L lines
         .defer(d3.json, "data/CTA_stations_4326.topojson") //async L stations
         .defer(d3.json, "data/new_build_500k.topojson") //asyn load new buildings
+        .defer(d3.json, "data/one_mi_buffer.topojson") //asyn load 1 mile buffer
         //csv prep for chart
         .defer(d3.csv,  "data/master.csv") //asyn load attributes from masterCSV
         .await(callback);
         
-    function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo, csvMaster) {
+    function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo, bufferTopo, csvMaster) {
         
         //grab the features from the topojsons
         var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county_idx).features;
         var lines = topojson.feature(linesTopo, linesTopo.objects.CTA_4326).features;
         var stations = topojson.feature(stationsTopo, stationsTopo.objects.CTA_stations_4326).features;
         var buildings = topojson.feature(buildingsTopo, buildingsTopo.objects.new_build_500k).features;
+        var buffer = topojson.feature(bufferTopo, bufferTopo.objects.one_mi_buffer).features;
         
         //call function to add tracts information to add-able layers
         var tractInformation = addTracts(map, tracts);
@@ -55,7 +57,7 @@ function createMap(){
         tractLayers["None"].addTo(map);
         
         //call function to get CTA and building stuff on map
-        var linesStationsBuildings = addOtherLayers(map, lines, stations, buildings);
+        var linesStationsBuildings = addOtherLayers(map, lines, stations, buildings, buffer);
 
         //adding csv values to the chart
         createChart(csvMaster);
@@ -95,7 +97,7 @@ function createMap(){
 // source:http://leafletjs.com/examples/choropleth/
 function changeLegend(layer,tractScales,map){
     //lol, MTA is NYC
-    var MTA = ['CTA "L" Routes','CTA "L" Stations','New Buildings Since 2010']
+    var MTA = ['CTA "L" Routes','CTA "L" Stations','CTA Stations 1-Mile Buffer','New Buildings Since 2010']
     var expressed = layer.name;
     
     //if adding MTA layer, don't mess with legend - the rest is housed in this IF statement
@@ -177,11 +179,12 @@ function changeLegend(layer,tractScales,map){
     }
 }; // end of changeLegend
 
-function addOtherLayers(map,lines,stations,buildings){
+function addOtherLayers(map,lines,stations,buildings,buffer){
     
     var layerDict = {
         'CTA "L" Routes': null,
         'CTA "L" Stations': null,
+        'CTA Stations 1-Mile Buffer': null,
         'New Buildings Since 2010': null
     };
     
@@ -221,8 +224,21 @@ function addOtherLayers(map,lines,stations,buildings){
         onEachFeature: buildingInfo
     });
     
+    var bufferOptions = {
+        fillColor: "yellow",
+        dashArray: "5, 5",
+        color: "#000",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.1
+    };
+    
+    var bufferPoly = L.geoJSON(buffer,{
+        style: bufferOptions});
+    
     layerDict['CTA "L" Routes'] = routes;
     layerDict['CTA "L" Stations'] = stationPoints;
+    layerDict['CTA Stations 1-Mile Buffer'] = bufferPoly;
     layerDict['New Buildings Since 2010'] = buildingPoints
     
     return layerDict;
@@ -885,7 +901,7 @@ function brush() {
 function highlight(d){
     d3.selectAll("#data")
     .style("stroke", "#660000")
-    .style("stroke-width","3");
+    .style("stroke-width","1");
 };
 
 function dehighlight(){
