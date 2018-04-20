@@ -57,9 +57,11 @@ function createMap(){
         var tractLayers = tractInformation[0];
         var tractScales = tractInformation[1];
         
-        //call function to get MTA and building stuff on map
+        //add blank tracts to begin...
+        tractLayers["None"].addTo(map);
+        
+        //call function to get CTA and building stuff on map
         var linesStationsBuildings = addOtherLayers(map, lines, stations, buildings);
-
 
         //adding csv values to the chart
         createChart(csvMaster);
@@ -82,10 +84,18 @@ function createMap(){
         })
     };
     
+    var sidebar = L.control.sidebar('sidebar', {
+        position: 'left'
+    });
+
+    map.addControl(sidebar);
+    sidebar.show();
+    sidebar.setContent('<h4 class="sidebar-title">Displacement and Gentrification Indicator Map</h4><br><p>This map allows you to visualize economic, education, housing, and population indicators that may help in the identification of areas of gentrification and/or displacement in Cook County, IL.</p><br><p>Hover your mouse over the <b>layers button</b> in the top right corner of the map to display and toggle between the available basemaps, census tract choropleth overlays, and reference layers. You may also click on any tract to retrieve more information about it, depending on current the tract overlay.</p><br>Scroll down to view a corresponding parallel coordinates <a class="js-scroll" href="#dataarea">visualization</a> or to learn more <a class= "js-scroll" href="#about">about</a> the data and developers.');
+    
     $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
         L.DomEvent.stopPropagation(ev);
     });
-
+    
 }; // end of createMap
 
 // source:http://leafletjs.com/examples/choropleth/
@@ -183,7 +193,7 @@ function addOtherLayers(map,lines,stations,buildings){
     
     var routes = L.geoJSON(lines,{
         style: function(feature){return routeStyle(feature)}
-    });
+    }).addTo(map);
     
     var stationMarkerOptions = {
         radius: 6,
@@ -199,7 +209,7 @@ function addOtherLayers(map,lines,stations,buildings){
             return L.circleMarker(latlng, stationMarkerOptions);
         },
         onEachFeature: stationName
-    });
+    }).addTo(map);
     
     var buildingMarkerOptions = {
         radius: 2,
@@ -324,6 +334,7 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
                 }
             },
             onEachFeature: function(feature,layer){return onEachFeature (feature,layer,expressed)}
+            //http://leafletjs.com/examples/choropleth/
         })
         altDitc[dictKey] = topo;
         scaleDict[dictKey] = colorScale;
