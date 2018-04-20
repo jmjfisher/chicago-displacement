@@ -39,12 +39,6 @@ function createMap(){
         .await(callback);
         
     function callback (error, tractsTopo, linesTopo, stationsTopo, buildingsTopo, csvMaster) {
-        //print console and check data 
-        console.log("Census Tracts",tractsTopo) //objects>>cook_county_inx >> geometries >>> properties >>> CG_GEOID
-        console.log("CTA Rail Lines",linesTopo)
-        console.log("CTA Rail Stations",stationsTopo)
-        console.log("buildings",buildingsTopo)
-        console.log("Master CSV, primary key = CG_GEOID",csvMaster)
         
         //grab the features from the topojsons
         var tracts = topojson.feature(tractsTopo, tractsTopo.objects.cook_county_idx).features;
@@ -90,7 +84,7 @@ function createMap(){
 
     map.addControl(sidebar);
     sidebar.show();
-    sidebar.setContent('<h4 class="sidebar-title">Displacement and Gentrification Indicator Map</h4><br><p>This map allows you to visualize economic, education, housing, and population indicators that may help in the identification of areas of gentrification and/or displacement in Cook County, IL.</p><br><p>Hover your mouse over the <b>layers button</b> in the top right corner of the map to display and toggle between the available basemaps, census tract choropleth overlays, and reference layers. You may also click on any tract to retrieve more information about it, depending on current the tract overlay.</p><br>Scroll down to view a corresponding parallel coordinates <a class="js-scroll" href="#dataarea">visualization</a> or to learn more <a class= "js-scroll" href="#about">about</a> the data and developers.');
+    sidebar.setContent('<h4 class="sidebar-title">Displacement and Gentrification Indicator Map</h4><br><p>This map allows you to visualize economic, education, housing, and population indicators that may help in the identification of areas of gentrification and/or displacement in Cook County, IL.</p><br><p>Hover your mouse over the <b>layers button</b> in the top right corner of the map to display and toggle between the available basemaps, census tract choropleth overlays, and reference layers. You may also click on any tract to retrieve more information about it, depending on current the tract overlay.</p><br><p>Scroll down to view a corresponding parallel coordinates <a class="js-scroll" href="#dataarea">visualization</a> or to learn more <a class= "js-scroll" href="#about">about</a> the data and developers.</p>');
     
     $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
         L.DomEvent.stopPropagation(ev);
@@ -318,7 +312,7 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
         var expressed = options[i];
         var dictKey = dictKeys[i];
         var colorScale = makeColorScale(expressed,tracts);
-        var topo = L.geoJson(tracts, {
+        var geojson = L.geoJson(tracts, {
             style: function(feature){
                 if (expressed != 'NONE'){
                     return setStyle(feature, colorScale, expressed)
@@ -328,7 +322,8 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
                         "fillOpacity": 0,
                         "weight": 0,
                         "opacity": 0,
-                        "color": '#3a3a3a'
+                        "color": '#3a3a3a',
+                        "className": String(feature.properties['CG_GEOID'])
                     };
                     return myStyle;
                 }
@@ -336,7 +331,7 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
             onEachFeature: function(feature,layer){return onEachFeature (feature,layer,expressed)}
             //http://leafletjs.com/examples/choropleth/
         })
-        altDitc[dictKey] = topo;
+        altDitc[dictKey] = geojson;
         scaleDict[dictKey] = colorScale;
     }
     return [altDitc, scaleDict];
@@ -379,7 +374,7 @@ function onEachFeature(feature,layer,expressed) {
         var fields = ['Renter:Owner Ratio Growth (%): ','2016 Home Owner Pop: ','2010 Home Owner Pop: ','2016 Home Renter Pop: ','2010 Home Renter Pop: ']
     } else if (expressed === 'GENT_IDX'){
         var lookUp = ['GENT_IDX','2016_POP','2010_POP']
-        var fields = ['Gentrification Index (0-1): ','2016 Population: ','2010 Population: ']
+        var fields = ['Gentrification Index: ','2016 Population: ','2010 Population: ']
     } else if (expressed === 'NONE'){
         var lookUp = ['2016_POP','2010_POP']
         var fields = ['2016 Population: ','2010 Population: ']
@@ -397,7 +392,8 @@ function onEachFeature(feature,layer,expressed) {
         minWidth: 50,
         closeOnClick: true,
         className: 'popup'});
-}; // end of endofFeature
+
+}; // end of onEachFeature
 
 function setStyle(feature, colorscale, expressed){
     //find the feature's fill color based on scale and make sure it's not undefined
@@ -413,53 +409,11 @@ function setStyle(feature, colorscale, expressed){
         "fillOpacity": 0.5,
         "weight": 1.5,
         "opacity": 0.5,
-        "color": '#3a3a3a'
+        "color": '#3a3a3a',
+        "className": String(feature.properties['CG_GEOID'])
     };
     return myStyle;
 }; // end of  setStyle
-
-/*
-function makeNaturalScale(expressed,tracts){
-    
-    var colorClasses = ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'];
-
-    //create color scale generator
-    var colorScale = d3.scaleThreshold()
-        .range(colorClasses);
-
-    //build array of all values of the expressed attribute
-    var domainArray = [];
-    for (var i=0; i<tracts.length; i++){
-        var check = tracts[i].properties[expressed];
-        if (check !== 'UNDEF') {
-            var val = parseFloat(check);
-            domainArray.push(val);
-        }
-    };
-    
-    var reverseArray = ['UERPCTCHG', 'POVPCTCHG', 'HSPCTCHG', 'ORRPCTCHG']
-    
-    if (reverseArray.includes(expressed)){
-        domainArray.reverse();
-    }
-
-    //cluster data using ckmeans clustering algorithm to create natural breaks
-    var clusters = ss.ckmeans(domainArray, 5);
-
-    //reset domain array to cluster minimums
-    domainArray = clusters.map(function(d){
-        return d3.min(d);
-    });
-
-    //remove first value from domain array to create class breakpoints
-    domainArray.shift();
-
-    //assign array of last 4 cluster minimums as domain
-    colorScale.domain(domainArray);
-
-    return colorScale;
-};
-*/
 
 function makeColorScale(expressed,tracts){
     
@@ -482,12 +436,6 @@ function makeColorScale(expressed,tracts){
     } else {
         var colorClasses = ['#fd8d3c','#bae4b3','#74c476','#31a354','#006d2c'];
     };
-    
-    /*
-    scales taken from colorbrewer
-    greens: ['#edf8e9','#bae4b3','#74c476','#31a354','#006d2c']
-    reds: ['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026']
-    */
 
     //create color scale generator
     var colorScale = d3.scaleQuantile()
@@ -836,17 +784,17 @@ function createChart(csvMaster){
 
         var actives = [];
         svg.selectAll(".axis .brush")
-                .on("mouseover", highlight)
-        .on("mouseout", dehighlight)
-          .filter(function(d) {
-            return d3.brushSelection(this);
-          })
-          .each(function(d) {
+            .on("mouseover", highlight)
+            .on("mouseout", dehighlight)
+              .filter(function(d) {
+                return d3.brushSelection(this);
+              })
+            .each(function(d) {
             actives.push({
               dimension: d,
               extent: d3.brushSelection(this)
             });
-          });
+            });
 
         var selected = data.filter(function(d) {
           if (actives.every(function(active) {
