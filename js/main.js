@@ -536,9 +536,6 @@ function smoothScroll(){
 
 //_______________________________________________________________________________________________________________
 //_______________________________________________________________________________________________________________
-//_______________________________________________________________________________________________________________
-//_______________________________________________________________________________________________________________
-//_______________________________________________________________________________________________________________
 
 //createCHART mofo 
 //https://bl.ocks.org/syntagmatic/05a5b0897a48890133beb59c815bd953
@@ -554,36 +551,11 @@ function createChart(csvMaster){
         innerHeight = height - 2;
 
     var devicePixelRatio = window.devicePixelRatio || 1;
-
-    var color = d3.scaleOrdinal()
-    //need to change the range of colors. May stick to five?
-    //change this to a function with the color ranges used on the map?
+    var lineColors = d3.scaleOrdinal()
     .range(
-        ["#5DA5B3",
-        "#D58323",
-        "#DD6CA7",
-        "#54AF52",
-        "#8C92E8",
-        "#E15E5A",
-        "#725D82",
-        "#776327",
-        "#50AB84",
-        "#954D56",
-        "#AB9C27",
-        "#517C3F",
-        "#9D5130",
-        "#357468",
-        "#5E9ACF",
-        "#C47DCB",
-        "#7D9E33",
-        "#DB7F85",
-        "#BA89AD",
-        "#4C6C86",
-        "#B59248",
-        "#D8597D",
-        "#944F7E",
-        "#D67D4B",
-        "#8F86C2"]);
+        [
+        //"#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858" //blue
+        "#fcfbfd","#efedf5","#dadaeb","#bcbddc","#9e9ac8","#807dba","#6a51a3","#54278f","#3f007d"]); //purple
     // these are assgined to the primary key and will need to be changed
     //for now they serve as a beautiful mess to the chart.
     //number acutally is a float too 
@@ -602,19 +574,6 @@ function createChart(csvMaster){
         within: function(d, extent, dim) { return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1]; },
         defaultScale: d3.scalePoint().range([0, innerHeight])
       },
-      /*
-      I think they anticipated it but never used
-      can be left out for the transformation
-      i'll leave it for now 
-      honestly don't think we'll need it...
-      
-      "Date": {
-        key: "Date",
-        coerce: function(d) { return new Date(d); },
-        extent: d3.extent,
-        within: function(d, extent, dim) { return extent[0] <= dim.scale(d) && dim.scale(d) <= extent[1]; },
-        defaultScale: d3.scaleTime().range([0, innerHeight])
-      }*/
     }; // end of var types 
 
     //make up the columns in the chart 
@@ -818,7 +777,7 @@ function createChart(csvMaster){
           .attr("width", 16);
 
       d3.selectAll(".axis.CG_GEOID .tick text")
-        .style("fill", color);
+        .style("fill", lineColors);
 
       function project(d) {
         return dimensions.map(function(p,i) {
@@ -833,7 +792,7 @@ function createChart(csvMaster){
       }; // end of project function
 
       function draw(d) {
-        ctx.strokeStyle = color(d.CG_GEOID);
+        ctx.strokeStyle = lineColors(d.CG_GEOID);
         ctx.beginPath();
         var coords = project(d);
         coords.forEach(function(p,i) {
@@ -877,6 +836,8 @@ function createChart(csvMaster){
 
         var actives = [];
         svg.selectAll(".axis .brush")
+                .on("mouseover", highlight)
+        .on("mouseout", dehighlight)
           .filter(function(d) {
             return d3.brushSelection(this);
           })
@@ -973,7 +934,18 @@ function brush() {
   });
 } // end of brush
 
+function highlight(d){
+    d3.selectAll("#data")
+    .style("stroke", "#660000")
+    .style("stroke-width","3");
+};
 
+function dehighlight(){
+    d3.selectAll("#data")
+    .style("stroke", null)
+    .style("stroke-width",null);
+
+};
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
