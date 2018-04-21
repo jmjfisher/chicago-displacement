@@ -393,6 +393,8 @@ function addTracts(map, tracts) { //source: http://bl.ocks.org/Caged/5779481
         }
 
         var popupContent = '';
+        lookUp.unshift('GEOID');
+        fields.unshift('Tract: ');
 
         for (var i=0; i < lookUp.length; i++){
             var stat = String(feature.properties[lookUp[i]]);
