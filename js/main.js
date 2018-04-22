@@ -8,7 +8,8 @@ function createMap(){
     var map = L.map('mapid', {
         maxZoom: 18,
         minZoom: 10,
-        maxBounds: myBounds
+        maxBounds: myBounds,
+        zoomControl:true
     }).setView([41.88, -87.7], 12);
    
     var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
@@ -70,6 +71,18 @@ function createMap(){
         
         L.control.groupedLayers(baseMaps, groupedOverlays, options).addTo(map);
         
+        //zoom settings
+        map.addControl( new L.Control.Search(
+            {layer: tractLayers["None"],
+             propertyName: "GEOID",
+             zoom: 16,
+             tooltipLimit: 7,
+             textPlaceholder: "Search Tract ID to zoom",
+             textErr: "Tract does not exist",
+             hideMarkerOnCollapse: true
+            }) );
+        
+        //change legend on tract change
         map.on('overlayadd', function(layer){
             changeLegend(layer, tractScales, map);
         })
@@ -81,7 +94,9 @@ function createMap(){
 
     map.addControl(sidebar);
     sidebar.show();
-    sidebar.setContent('<h4 class="sidebar-title">Displacement and Gentrification Indicator Map</h4><br><p>This map allows you to visualize economic, education, housing, and population indicators that may help in the identification of areas of gentrification and/or displacement in Cook County, IL.</p><br><p>Hover your mouse over the <b>layers button</b> in the top right corner of the map to display and toggle between the available basemaps, census tract choropleth overlays, and reference layers. You may also click on any tract to retrieve more information about it, depending on current the tract overlay.</p><br><p>Scroll down to view a corresponding parallel coordinates <a class="js-scroll" href="#dataarea">visualization</a> or to learn more <a class= "js-scroll" href="#about">about</a> the data and developers.</p>');
+    sidebar.setContent('<h4 class="sidebar-title">Displacement and Gentrification Indicator Map</h4><br><p>This map allows you to visualize economic, education, housing, and population indicators that may help in the identification of areas of gentrification and/or displacement in Cook County, IL.</p><br><p>Hover your mouse over the <b>layers button</b> in the top right corner of the map to display and toggle between the available basemaps, census tract choropleth overlays, and reference layers. You may also zoom and center the map to a tract by searching its ID and click on any tract to retrieve more information about it, depending on the current tract overlay.</p><br><p>Scroll down to view a corresponding dynamic parallel coordinates <a class="js-scroll" href="#dataarea">visualization</a> or to learn more <a class= "js-scroll" href="#about">about</a> the data and developers.</p>');
+    
+    //http://labs.easyblog.it/maps/leaflet-search/
     
     $(".leaflet-control-container").on('mousedown dblclick pointerdown wheel', function(ev){
         L.DomEvent.stopPropagation(ev);
@@ -695,9 +710,11 @@ function createChart(){
         .style("height", dataHeight-40 + "px");
 
     var svg = container.append("svg")
+        .attr("class", "chart-svg")
         .attr("width", dataWidth + "px")
         .attr("height", dataHeight-40 + "px")
       .append("g")
+        .attr("class", "chart-g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 /*
@@ -706,6 +723,7 @@ function createChart(){
     canvas can create thousands of separate elements without significantly effecting performance
     */
     var canvas = container.append("canvas")
+        .attr("class", "chart-canvas")
         .attr("width", width * devicePixelRatio)
         .attr("height", height * devicePixelRatio)
         .style("width", width + "px")
