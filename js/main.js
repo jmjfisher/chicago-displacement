@@ -72,18 +72,37 @@ function createMap(){
         L.control.groupedLayers(baseMaps, groupedOverlays, options).addTo(map);
         
         //zoom settings
-        map.addControl( new L.Control.Search(
-            {layer: tractLayers["None"],
+        var searchControl = new L.Control.Search(
+            {layer: tractLayers['None'],
+             initial: false,
              propertyName: "GEOID",
              zoom: 16,
              tooltipLimit: 7,
              textPlaceholder: "Search Tract ID to zoom",
              textErr: "Tract does not exist",
-             hideMarkerOnCollapse: true
-            }) );
+             hideMarkerOnCollapse: true,
+             autoCollapse: true
+            });
+        
+        //add zoom search to map
+        map.addControl(searchControl);
+        
+        //on zoom to, open tract popup
+        searchControl.on('search:locationfound', function (e){
+            e.layer.openPopup();
+        })
         
         //change legend on tract change
         map.on('overlayadd', function(layer){
+            //on layer change, alter search layer in search
+            var MTA = ['CTA "L" Routes','CTA "L" Stations','CTA Stations 1-Mile Buffer','New Buildings Since 2010']
+            var expressed = layer.name;
+
+            if (MTA.includes(expressed) == false){
+                searchControl.setLayer(tractLayers[layer.name])
+            }
+            
+            //on layer change, update the legend
             changeLegend(layer, tractScales, map);
         })
     };
