@@ -15,11 +15,12 @@ span {
 }
 
 #data {
-    height: 88vh;
+    height: 85vh;
     width: 94%;
-    display: inline-block;
+    display: inline-flex;
     margin-left: 3%;
     margin-top: 60px;
+    margin-bottom: 0px;
 }
 
 .chart-title{
@@ -32,7 +33,7 @@ span {
     width: 85%;
     display: inline-block;
     margin-left: 7.5%;
-    margin-top: 60px;
+    margin-top: 40px;
 }
 
 .leaflet-popup-content-wrapper {
@@ -104,10 +105,11 @@ span {
     text-align: center;
 }
 
-/* All stolen directly from that example */
+/* All directly from that example */
 
 .parcoords {
-  display: block;
+    display: block;
+    margin-right: 20px;
 }
 
 .parcoords svg,
@@ -177,15 +179,22 @@ span {
   stroke-width: 1px;
 }
 
+.title-div{
+    margin-top: 1px;
+}
+
+.tractIDdiv {
+    width: 100%;
+    flex-flow: 1;
+}
+
 .TractID {
-  width: 10%;
-  height: 100px;
-  margin: 6px 12px;
-  tab-size: 40;
-  font-size: 10px;
-  overflow: auto;
-  display: inline-block;
-  float: right;
+    margin-top: 50px;
+    width: 112%;
+    height: 200px;
+    tab-size: 100;
+    font-size: 12px;
+    overflow: auto;
 }
 
 /*

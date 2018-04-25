@@ -595,7 +595,7 @@ function createChart(){
         parentWidth = $("#data").parent().width(),
         dataWidth = $("#data").width(),
         dataHeight = $("#data").height(),
-        margin = {top: 90, right: 140, bottom: 40, left: 40},
+        margin = {top: 80, right: 140, bottom: 40, left: 40},
         height = (screenHeight*.88) - margin.top - margin.bottom,
         width = (parentWidth*1) - margin.left - margin.right-150,
         innerHeight = height - 2;
@@ -725,13 +725,13 @@ function createChart(){
 
     var container = d3.select("#data").append("div")
         .attr("class", "parcoords")
-        .style("width", dataWidth + "px")
-        .style("height", dataHeight-40 + "px");
+        .style("width", dataWidth-150 + "px")
+        .style("height", dataHeight-10 + "px");
 
     var svg = container.append("svg")
         .attr("class", "chart-svg")
-        .attr("width", dataWidth + "px")
-        .attr("height", dataHeight-40 + "px")
+        .attr("width", dataWidth-150 + "px")
+        .attr("height", dataHeight-10 + "px")
       .append("g")
         .attr("class", "chart-g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -762,7 +762,9 @@ function createChart(){
     //output var for bottom chart
     // this is the first of three outputs that control the chart output
     //this loads the div
-    var output= d3.select(".parcoords")
+
+    var output= d3.select("#data").append("div")
+        .attr("class", "TractIDdiv")
         .append("pre")
         .attr("class", "TractID")
 
@@ -805,8 +807,6 @@ function createChart(){
         }
         dim.scale.domain(dim.domain);
       });
-
-
 
       var render = renderQueue(draw).rate(50);
 
@@ -853,7 +853,7 @@ function createChart(){
     });
     //second out put for the initial load of the chart
     //slice controls the number of output rows
-   output.text(d3.csvFormat(col2.slice(0,5)));
+   output.text(d3.csvFormat(col2.slice(0,50)));
 
 
       function project(d) {
@@ -950,7 +950,7 @@ function createChart(){
         });
         //the final out put that changes the rows for the amoutn selected
         // slice controls the number of out put rows
-        output.text(d3.csvFormat(colOut.slice(0,5)));
+        output.text(d3.csvFormat(colOut.slice(0,50)));
 
       }
     });
@@ -959,7 +959,9 @@ function createChart(){
       return typeof v === "function" ? v : function() { return v; };
     };
     
-    var chartTitle = d3.select("#data").append("h4")
+    var chartTitle = d3.select(".data-container").append("div")
+        .attr("class", "title-div")
+        .append("h4")
         .attr("class", "chart-title")
         .html("Growth of Gentrification and Displacement Indicators from 2010-2016 in Cook County, IL");
     
@@ -1017,4 +1019,4 @@ function dehighlight(){
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
-$(document).ready(scrollify);
+//$(document).ready(scrollify);
