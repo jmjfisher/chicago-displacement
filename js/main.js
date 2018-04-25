@@ -597,7 +597,7 @@ function createChart(){
         dataHeight = $("#data").height(),
         margin = {top: 90, right: 140, bottom: 40, left: 40},
         height = (screenHeight*.88) - margin.top - margin.bottom,
-        width = (parentWidth*1) - margin.left - margin.right,
+        width = (parentWidth*1) - margin.left - margin.right-150,
         innerHeight = height - 2;
 
     var devicePixelRatio = window.devicePixelRatio || 1;
@@ -762,10 +762,9 @@ function createChart(){
     //output var for bottom chart
     // this is the first of three outputs that control the chart output
     //this loads the div
-    var output= d3.select("#data")
+    var output= d3.select(".parcoords")
         .append("pre")
         .attr("class", "TractID")
-
 
 
     var axes = svg.selectAll(".axis")

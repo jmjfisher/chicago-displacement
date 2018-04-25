@@ -185,6 +185,7 @@ span {
   font-size: 10px;
   overflow: auto;
   display: inline-block;
+  float: right;
 }
 
 /*
