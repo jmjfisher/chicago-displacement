@@ -76,7 +76,7 @@ function createMap(){
             {layer: tractLayers['None'],
              initial: false,
              propertyName: "GEOID",
-             zoom: 16,
+             zoom: 13,
              tooltipLimit: 7,
              textPlaceholder: "Search Tract ID to zoom",
              textErr: "Tract does not exist",
@@ -587,7 +587,7 @@ function scrollify(){
 //_______________________________________________________________________________________________________________
 //_______________________________________________________________________________________________________________
 
-//createCHART mofo 
+//createCHART 
 //https://bl.ocks.org/syntagmatic/05a5b0897a48890133beb59c815bd953
 function createChart(){
 
@@ -758,15 +758,26 @@ function createChart(){
     ctx.lineWidth = 1.5;
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
+
+    //output var for bottom chart
+    // this is the first of three outputs that control the chart output
+    //this loads the div
+    var output= d3.select("#data")
+        .append("pre")
+        .attr("class", "TractID")
+
+
+
     var axes = svg.selectAll(".axis")
         .data(dimensions)
-      .enter().append("g")
+        .enter().append("g")
         .attr("class", function(d) { return "axis " + d.key.replace(/ /g, "_"); })
         .attr("transform", function(d,i) { return "translate(" + xscale(i) + ")"; });
     //everything above is a csv. pre-data load so this needs to be prep. for data ingestion    
 
     //start of loading data and of VIZ
     d3.csv("data/master.csv", function(error, data) {
+        //console.log(data)
       if (error) throw error;
 
       // shuffle the data!
@@ -795,6 +806,8 @@ function createChart(){
         }
         dim.scale.domain(dim.domain);
       });
+
+
 
       var render = renderQueue(draw).rate(50);
 
@@ -831,6 +844,18 @@ function createChart(){
 
       d3.selectAll(".axis.CG_GEOID .tick text")
         .style("fill", lineColors);
+    /*
+    this var controls the GEOID field we want, we can add more if we'd like
+    I want to figure out for to go through a dictonary....for now this
+    works. 
+    */
+    var col2 = data.map(function(d){
+        return {GEOID: d.GEOID}
+    });
+    //second out put for the initial load of the chart
+    //slice controls the number of output rows
+   output.text(d3.csvFormat(col2.slice(0,5)));
+
 
       function project(d) {
         return dimensions.map(function(p,i) {
@@ -848,6 +873,7 @@ function createChart(){
         ctx.strokeStyle = lineColors(d.CG_GEOID);
         ctx.beginPath();
         var coords = project(d);
+        //console.log(coords)
         coords.forEach(function(p,i) {
           // this tricky bit avoids rendering null values as 0
           if (p === null) {
@@ -911,37 +937,21 @@ function createChart(){
           }
         });
 
-        // show ticks for active brush dimensions
-        // and filter ticks to only those within brush extents
-        /*
-        svg.selectAll(".axis")
-            .filter(function(d) {
-              return actives.indexOf(d) > -1 ? true : false;
-            })
-            .classed("active", true)
-            .each(function(dimension, i) {
-              var extent = extents[i];
-              d3.select(this)
-                .selectAll(".tick text")
-                .style("display", function(d) {
-                  var value = dimension.type.coerce(d);
-                  return dimension.type.within(value, extent, dimension) ? null : "none";
-                });
-            });
-
-        // reset dimensions without active brushes
-        svg.selectAll(".axis")
-            .filter(function(d) {
-              return actives.indexOf(d) > -1 ? false : true;
-            })
-            .classed("active", false)
-            .selectAll(".tick text")
-              .style("display", null);
-        */
 
         ctx.clearRect(0,0,width,height);
         ctx.globalAlpha = d3.min([0.85/Math.pow(selected.length,0.3),1]);
         render(selected);
+
+        /*
+        this var controls the selected column. Again, I would like to this to change on it's own through
+        one function instead at two different places. 
+        */
+        var colOut = selected.map(function(d){
+            return {GEOID: d.GEOID}
+        });
+        //the final out put that changes the rows for the amoutn selected
+        // slice controls the number of out put rows
+        output.text(d3.csvFormat(colOut.slice(0,5)));
 
       }
     });
@@ -999,6 +1009,12 @@ function dehighlight(){
     .style("stroke-width",null);
 
 };
+
+//_______________________________________________________________________________________________________________
+
+
+//_______________________________________________________________________________________________________________
+
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
