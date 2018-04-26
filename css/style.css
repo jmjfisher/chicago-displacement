@@ -33,7 +33,7 @@ span {
     width: 85%;
     display: inline-block;
     margin-left: 7.5%;
-    margin-top: 40px;
+    margin-top: 70px;
 }
 
 .leaflet-popup-content-wrapper {
@@ -190,7 +190,7 @@ span {
 
 .TractID {
     margin-top: 50px;
-    width: 112%;
+    width: 115%;
     height: 200px;
     tab-size: 100;
     font-size: 12px;

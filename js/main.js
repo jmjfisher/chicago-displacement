@@ -121,8 +121,13 @@ function createMap(){
         L.DomEvent.stopPropagation(ev);
     });
     
-    //call function to create the chart
-    createChart();
+    //call function to create the chart if not too small
+    var browserWidth = $(document).width();
+    if (browserWidth > 760){
+        createChart();
+    } else {
+        smallBrowser();
+    };
     
 }; // end of createMap
 
@@ -556,7 +561,7 @@ function smoothScroll(){
       // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
       $('html, body').animate({
         scrollTop: $(hash).offset().top
-      }, 800, function(){
+      }, 700, function(){
    
         // Add hash (#) to URL when done scrolling (default click behavior)
         window.location.hash = hash;
@@ -569,13 +574,13 @@ function scrollify(){
     $.scrollify({
         section : "#home,#maparea,#dataarea,#aboutarea",
         easing: "easeOutExpo",
-        scrollSpeed: 1100,
+        scrollSpeed: 700,
         offset : 0,
         scrollbars: true,
         standardScrollElements: "",
         setHeights: true,
         overflowScroll: true,
-        updateHash: true,
+        updateHash: false,
         touchScroll:true,
         before:function() {},
         after:function() {},
@@ -766,8 +771,7 @@ function createChart(){
     var output= d3.select("#data").append("div")
         .attr("class", "TractIDdiv")
         .append("pre")
-        .attr("class", "TractID")
-
+        .attr("class", "TractID");
 
     var axes = svg.selectAll(".axis")
         .data(dimensions)
@@ -1011,6 +1015,13 @@ function dehighlight(){
 
 };
 
+function smallBrowser(){
+    $('#data').height(100)
+    d3.select('#data').append("div")
+        .attr('class','small-browser')
+        .html('<h4>(It looks as if your browser is too thin for this chart to function usefully. Please visit again on a tablet or computer. Thank you.)</h4>');
+};
+
 //_______________________________________________________________________________________________________________
 
 
@@ -1019,4 +1030,4 @@ function dehighlight(){
 
 $(document).ready(createMap);
 $(document).ready(smoothScroll);
-//$(document).ready(scrollify);
+$(document).ready(scrollify);
