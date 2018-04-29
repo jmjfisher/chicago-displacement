@@ -1016,10 +1016,9 @@ function dehighlight(){
 };
 
 function smallBrowser(){
-    $('#data').height(100)
     d3.select('#data').append("div")
         .attr('class','small-browser')
-        .html('<h4>(It looks as if your browser is too thin for this chart to function usefully. Please visit again on a tablet or computer. Thank you.)</h4>');
+        .html('<h4 id="mobile-message">(It looks as if your browser is too thin for this chart to function usefully. Please visit again on a tablet or computer. Thank you.)</h4>');
 };
 
 //_______________________________________________________________________________________________________________

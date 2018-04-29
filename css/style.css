@@ -194,6 +194,12 @@ span {
     overflow: auto;
 }
 
+#mobile-message{
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+}
+
 /*
 if we decided to keep it. 
 button#keep-data,
