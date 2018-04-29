@@ -857,7 +857,7 @@ function createChart(){
     });
     //second out put for the initial load of the chart
     //slice controls the number of output rows
-   output.text(d3.csvFormat(col2.slice(0,50)));
+   output.text(d3.csvFormat(col2.slice(0,27)));
 
 
       function project(d) {
@@ -954,7 +954,7 @@ function createChart(){
         });
         //the final out put that changes the rows for the amoutn selected
         // slice controls the number of out put rows
-        output.text(d3.csvFormat(colOut.slice(0,50)));
+        output.text(d3.csvFormat(colOut.slice(0,27)));
 
       }
     });
